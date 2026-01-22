@@ -1,7 +1,7 @@
 import pool from "../utils/database.js";
 
 const listAllUsers = async () => {
-  const [rows] = await pool.query("SELECT * FROM users");
+  const rows = await pool.query("SELECT * FROM users");
   console.log("rows", rows);
   return rows;
 };
@@ -33,11 +33,8 @@ const addUser = async (user) => {
 };
 
 const getUserByEmail = async (email) => {
-  const rows = pool.query(`SELECT * FROM users WHERE email = ?`, [email]);
-
-  console.log("rows", rows);
-
-  return rows;
+  const rows = await pool.query(`SELECT * FROM users WHERE email = ?`, [email]);
+  return rows[0] ?? null;
 };
 
 export { listAllUsers, getUserByIdModel, addUser, getUserByEmail };
