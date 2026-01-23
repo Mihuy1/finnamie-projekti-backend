@@ -1,6 +1,7 @@
 import { getUserByEmail } from "../models/users-model.js";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
+import cookieParser from "cookie-parser";
 
 const postLogin = async (req, res, next) => {
   try {
@@ -39,7 +40,14 @@ const postLogin = async (req, res, next) => {
       expiresIn: "2h",
     });
 
-    res.json({ user: userWithoutPass, token });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "Strict",
+      maxAge: 7200000,
+    });
+
+    res.status(200).json({ message: "Login succesful!" });
   } catch (error) {
     next(error);
   }
