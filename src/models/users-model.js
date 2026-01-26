@@ -61,9 +61,11 @@ const modifyUser = async (id, user) => {
 
   const sql = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
 
-  const [result] = await pool.execute(sql, params);
+  const result = await pool.execute(sql, params);
 
-  return result;
+  return {
+    affectedRows: result.affectedRows.toString(),
+  };
 };
 
 const getUserByEmail = async (email) => {

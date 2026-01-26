@@ -64,8 +64,9 @@ const putUser = async (req, res, next) => {
       currentPassword, // current, only if changing password
     } = req.body;
 
-    const userRows = await getUserByIdModel(id);
-    const currentUser = userRows[0];
+    const currentUser = await getUserByIdModel(id);
+
+    console.log("currentUser", currentUser);
 
     if (!currentUser) {
       return res.status(404).json({ message: "User not found" });
