@@ -2,6 +2,7 @@ import {
   listAllUsers,
   getUserByIdModel,
   addUser,
+  modifyUser,
 } from "../models/users-model.js";
 import argon2 from "argon2";
 
@@ -51,4 +52,70 @@ const postUser = async (req, res, next) => {
   }
 };
 
-export { getUsers, getUserById, postUser };
+const putUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      first_name,
+      last_name,
+      email,
+      password, // new
+      currentPassword, // current, only if changing password
+    } = req.body;
+
+    const userRows = await getUserByIdModel(id);
+    const currentUser = userRows[0];
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const updateData = {};
+
+    if (first_name !== undefined) updateData.first_name = first_name;
+    if (last_name !== undefined) updateData.last_name = last_name;
+    if (email !== undefined) updateData.email = email;
+
+    if (password) {
+      if (!currentPassword) {
+        return res.status(400).json({
+          message: "Current password is required to update your password.",
+        });
+      }
+
+      try {
+        const isMatch = await argon2.verify(
+          currentUser.password,
+          currentPassword,
+        );
+        if (!isMatch) {
+          return res
+            .status(401)
+            .json({ message: "Current password is incorrect." });
+        }
+      } catch (err) {
+        return res
+          .status(500)
+          .json({ message: "Error verifying credentials." });
+      }
+
+      updateData.password = await argon2.hash(password);
+    }
+
+    const result = await modifyUser(id, updateData);
+
+    res.status(200).json({
+      message: "User updated successfully",
+      updated: Object.keys(updateData),
+      result: result,
+    });
+  } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ message: "Email already in use." });
+    }
+    next(error);
+  }
+};
+
+export { getUsers, getUserById, postUser, putUser };

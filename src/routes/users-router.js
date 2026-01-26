@@ -3,12 +3,17 @@ import {
   getUserById,
   getUsers,
   postUser,
+  putUser,
 } from "../controllers/users-controller.js";
+import { authorize } from "../middlewares.js";
 
 const userRouter = express.Router();
 
-userRouter.route("/").get(getUsers);
-userRouter.route("/:id").get(getUserById);
 userRouter.route("/").post(postUser);
+
+userRouter.use(authorize);
+
+userRouter.route("/").get(getUsers);
+userRouter.route("/:id").get(getUserById).put(putUser);
 
 export default userRouter;

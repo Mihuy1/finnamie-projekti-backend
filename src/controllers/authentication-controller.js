@@ -1,7 +1,6 @@
 import { getUserByEmail } from "../models/users-model.js";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
-import cookieParser from "cookie-parser";
 
 const postLogin = async (req, res, next) => {
   try {
