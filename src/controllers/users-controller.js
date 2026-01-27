@@ -56,6 +56,16 @@ const putUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    if (req.user) {
+      if (req.user.id !== id && req.user.role !== "admin") {
+        return res
+          .status(403)
+          .json({
+            message: "Forbidden: You can only modify your own account.",
+          });
+      }
+    }
+
     const {
       first_name,
       last_name,
@@ -65,8 +75,6 @@ const putUser = async (req, res, next) => {
     } = req.body;
 
     const currentUser = await getUserByIdModel(id);
-
-    console.log("currentUser", currentUser);
 
     if (!currentUser) {
       return res.status(404).json({ message: "User not found" });
