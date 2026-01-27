@@ -58,11 +58,9 @@ const putUser = async (req, res, next) => {
 
     if (req.user) {
       if (req.user.id !== id && req.user.role !== "admin") {
-        return res
-          .status(403)
-          .json({
-            message: "Forbidden: You can only modify your own account.",
-          });
+        return res.status(403).json({
+          message: "Forbidden: You can only modify your own account.",
+        });
       }
     }
 

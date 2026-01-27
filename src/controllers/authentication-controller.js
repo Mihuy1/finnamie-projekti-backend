@@ -1,4 +1,4 @@
-import { getUserByEmail } from "../models/users-model.js";
+import { addUser, getUserByEmail } from "../models/users-model.js";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 
@@ -52,4 +52,42 @@ const postLogin = async (req, res, next) => {
   }
 };
 
-export { postLogin };
+const register = async (req, res, next) => {
+  try {
+    const existingUserByEmail = await getUserByEmail(req.body.email);
+
+    if (existingUserByEmail)
+      return res
+        .status(409)
+        .json({ message: "User with this email already exists" });
+
+    const { first_name, last_name, email, password } = req.body;
+
+    const hashedPassword = await argon2.hash(password);
+
+    const registeredUser = {
+      first_name,
+      last_name,
+      email,
+      password: hashedPassword,
+      role: "user",
+    };
+
+    const result = await addUser(registeredUser);
+
+    res
+      .status(200)
+      .json({ message: "Registration successful!", userId: result.id });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getMe = async (req, res) => {
+  res.status(200).json({
+    user: req.user,
+    message: "Session is active",
+  });
+};
+
+export { postLogin, getMe, register };
