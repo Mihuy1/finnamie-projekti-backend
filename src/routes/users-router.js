@@ -12,6 +12,7 @@ const userRouter = express.Router();
 userRouter.route("/").post(postUser);
 
 // Kommenttiin testaamisen vuoksi.
+// Pitäs varmaa käyttää testaamisessakin.
 //userRouter.use(authorize);
 
 userRouter.route("/").get(getUsers);
