@@ -22,7 +22,7 @@ const authorize = (req, res, next) => {
 };
 
 const allowSelfOrAdmin = (req, res, next) => {
-  if (!req.user) return res.status(401).json({ message: "Acess denied." });
+  if (!req.user) return res.status(401).json({ message: "Access denied." });
 
   const targetId = String(req.params.id);
   const userId = String(req.user.id);

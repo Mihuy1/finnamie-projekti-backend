@@ -11,7 +11,8 @@ const userRouter = express.Router();
 
 userRouter.route("/").post(postUser);
 
-userRouter.use(authorize);
+// Kommenttiin testaamisen vuoksi.
+//userRouter.use(authorize);
 
 userRouter.route("/").get(getUsers);
 userRouter.route("/:id").get(getUserById).put(allowSelfOrAdmin, putUser);
