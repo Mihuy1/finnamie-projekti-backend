@@ -90,4 +90,15 @@ const getMe = async (req, res) => {
   });
 };
 
-export { postLogin, getMe, register };
+const logout = async (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "Strict",
+    path: "/",
+  });
+
+  return res.status(200).json({ message: "Logged out" });
+};
+
+export { postLogin, getMe, register, logout };
