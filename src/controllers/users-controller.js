@@ -75,7 +75,7 @@ const putUser = async (req, res, next) => {
     const currentUser = await getUserByIdModel(id);
 
     if (!currentUser) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found", id: id });
     }
 
     const updateData = {};
@@ -114,8 +114,7 @@ const putUser = async (req, res, next) => {
 
     res.status(200).json({
       message: "User updated successfully",
-      updated: Object.keys(updateData),
-      result: result,
+      updated: updateData,
     });
   } catch (error) {
     if (error.code === "ER_DUP_ENTRY") {

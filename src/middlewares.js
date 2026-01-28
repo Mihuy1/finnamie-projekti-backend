@@ -21,4 +21,18 @@ const authorize = (req, res, next) => {
   }
 };
 
-export { authorize };
+const allowSelfOrAdmin = (req, res, next) => {
+  if (!req.user) return res.status(401).json({ message: "Acess denied." });
+
+  const targetId = String(req.params.id);
+  const userId = String(req.user.id);
+
+  if (userId !== targetId && req.user.role !== "admin")
+    return res
+      .status(403)
+      .json({ message: "Forbidden: insufficient permissions." });
+
+  next();
+};
+
+export { authorize, allowSelfOrAdmin };

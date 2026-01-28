@@ -7,10 +7,10 @@ const listAllUsers = async () => {
 };
 
 const getUserByIdModel = async (id) => {
-  const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+  const rows = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
   console.log("rows", rows);
 
-  return rows[0];
+  return rows[0] ?? null;
 };
 
 const addUser = async (user) => {

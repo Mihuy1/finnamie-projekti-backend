@@ -5,7 +5,7 @@ import {
   postUser,
   putUser,
 } from "../controllers/users-controller.js";
-import { authorize } from "../middlewares.js";
+import { allowSelfOrAdmin, authorize } from "../middlewares.js";
 
 const userRouter = express.Router();
 
@@ -14,6 +14,6 @@ userRouter.route("/").post(postUser);
 userRouter.use(authorize);
 
 userRouter.route("/").get(getUsers);
-userRouter.route("/:id").get(getUserById).put(putUser);
+userRouter.route("/:id").get(getUserById).put(allowSelfOrAdmin, putUser);
 
 export default userRouter;
