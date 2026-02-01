@@ -1,10 +1,12 @@
+import argon2 from "argon2";
+import { v4 as uuidv4 } from "uuid";
+
 import {
   listAllUsers,
   getUserByIdModel,
   addUser,
   modifyUser,
 } from "../models/users-model.js";
-import argon2 from "argon2";
 
 const getUsers = async (req, res, next) => {
   try {
@@ -24,15 +26,28 @@ const getUserById = async (req, res, next) => {
 };
 
 const postUser = async (req, res, next) => {
+  console.log("POSTING USER..");
   try {
-    const { first_name, last_name, email, password, role } = req.body;
+    const {
+      first_name,
+      last_name,
+      email,
+      password,
+      role,
+      image_url,
+      description,
+    } = req.body;
+
     const hashedPassword = await argon2.hash(password);
     const newUser = {
+      id: uuidv4(),
       first_name,
       last_name,
       email,
       password: hashedPassword,
       role,
+      image_url,
+      description,
     };
 
     console.log("newUser", newUser);

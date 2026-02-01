@@ -14,17 +14,34 @@ const getUserByIdModel = async (id) => {
 };
 
 const addUser = async (user) => {
-  const { first_name, last_name, email, password, role } = user;
+  const {
+    id,
+    first_name,
+    last_name,
+    email,
+    password,
+    role,
+    image_url,
+    description,
+  } = user;
 
-  const sql = `INSERT INTO users (first_name, last_name, email, password, role) VALUES (?, ?, ?, ?, ?)`;
-  const params = [first_name, last_name, email, password, role].map(
-    (value) => value ?? null,
-  );
+  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, image_url, description) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+  const params = [
+    id,
+    first_name,
+    last_name,
+    email,
+    password,
+    role,
+    image_url,
+    description,
+  ].map((value) => value ?? null);
 
   const rows = await pool.execute(sql, params);
 
   return {
-    id: rows.insertId?.toString(),
+    id,
     first_name,
     last_name,
     email,
