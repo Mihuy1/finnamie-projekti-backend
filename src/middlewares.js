@@ -35,4 +35,17 @@ const allowSelfOrAdmin = (req, res, next) => {
   next();
 };
 
-export { authorize, allowSelfOrAdmin };
+const allowRoles =
+  (...roles) =>
+  (req, res, next) => {
+    if (!req.user) return res.status(401).json({ message: "Acess denied." });
+
+    const role = String(req.user.role ?? "");
+
+    if (!roles.inckudes(role))
+      return res.status(403).json({ message: "Forbidden." });
+
+    next();
+  };
+
+export { authorize, allowSelfOrAdmin, allowRoles };
