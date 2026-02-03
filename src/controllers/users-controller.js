@@ -26,7 +26,6 @@ const getUserById = async (req, res, next) => {
 };
 
 const postUser = async (req, res, next) => {
-  console.log("POSTING USER..");
   try {
     const {
       first_name,
@@ -71,6 +70,7 @@ const putUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    // tartteeko tätä, kun route käyttää allowSelfOrAdmin
     if (req.user) {
       if (req.user.id !== id && req.user.role !== "admin") {
         return res.status(403).json({

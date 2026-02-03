@@ -14,6 +14,7 @@ const authorize = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = decoded;
+    console.log("Authorized user: ", decoded);
 
     next();
   } catch (error) {
@@ -23,9 +24,10 @@ const authorize = (req, res, next) => {
 
 const allowSelfOrAdmin = (req, res, next) => {
   if (!req.user) return res.status(401).json({ message: "Access denied." });
-
   const targetId = String(req.params.id);
   const userId = String(req.user.id);
+  console.log(targetId, "<- TARGET ID");
+  console.log(userId, "<- USERID");
 
   if (userId !== targetId && req.user.role !== "admin")
     return res
@@ -38,11 +40,10 @@ const allowSelfOrAdmin = (req, res, next) => {
 const allowRoles =
   (...roles) =>
   (req, res, next) => {
-    if (!req.user) return res.status(401).json({ message: "Acess denied." });
-
+    if (!req.user) return res.status(401).json({ message: "Access denied." });
     const role = String(req.user.role ?? "");
 
-    if (!roles.inckudes(role))
+    if (!roles.includes(role))
       return res.status(403).json({ message: "Forbidden." });
 
     next();

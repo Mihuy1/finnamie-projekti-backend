@@ -3,6 +3,7 @@ import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 
 const postLogin = async (req, res, next) => {
+  console.log(req.body);
   try {
     const { email, password } = req.body ?? {};
 
@@ -38,6 +39,8 @@ const postLogin = async (req, res, next) => {
     const token = jwt.sign(userWithoutPass, process.env.JWT_SECRET, {
       expiresIn: "2h",
     });
+
+    console.log("Login token: ", token);
 
     res.cookie("token", token, {
       httpOnly: true,
