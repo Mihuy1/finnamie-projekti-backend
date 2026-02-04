@@ -9,6 +9,7 @@ const timeslotById = async (id) => {
   return await pool.query("SELECT * FROM timeslot WHERE id = ?", [id]);
 };
 
+// varmaan turha
 const timeslotHistory = async (id) => {
   return await pool.query(
     "SELECT * FROM timeslot WHERE host_id = ? AND end_time < NOW()",
@@ -16,11 +17,21 @@ const timeslotHistory = async (id) => {
   );
 };
 
+const getOwnedTimeslots = async (id) => {
+  return await pool.query("SELECT * FROM timeslot WHERE host_id = ?", [id]);
+};
+
+const getAvailableTimeslots = async () => {
+  return await pool.query(
+    "SELECT * FROM timeslot WHERE res_status = 'available'",
+  );
+};
+
 const addTimeSlot = async (timeslot) => {
   const q = `INSERT INTO timeslot(id, host_id, type, start_time, end_time, description,
                           city, latitude_deg, longitude_deg, activity_type)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-  let {
+  const {
     id,
     host_id,
     type,
@@ -33,8 +44,10 @@ const addTimeSlot = async (timeslot) => {
     activity_type,
   } = timeslot;
 
+  /*
   start_time = start_time.replace("Z", "").replace("T", " ");
   end_time = end_time.replace("Z", "").replace("T", " ");
+  */
 
   const params = [
     id,
@@ -111,4 +124,6 @@ export {
   updateTimeslot,
   deleteTimeslot,
   timeslotHistory,
+  getOwnedTimeslots,
+  getAvailableTimeslots,
 };
