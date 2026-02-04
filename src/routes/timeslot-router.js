@@ -2,9 +2,11 @@ import express from "express";
 import {
   createNewTimeslot,
   deleteExistingTimeslot,
+  getAvailable,
   getTimeslot,
   getTimeslotById,
   getTimeslotHistory,
+  getTimeslotsByHostId,
   updateExistingTimeslot,
 } from "../controllers/timeslot-controller.js";
 import { allowRoles, authorize } from "../middlewares.js";
@@ -18,6 +20,8 @@ timeslotRouter
   .post(allowRoles("host", "admin"), createNewTimeslot);
 
 timeslotRouter.route("/history").get(getTimeslotHistory);
+timeslotRouter.route("/available").get(getAvailable);
+timeslotRouter.route("/host/:id").get(getTimeslotsByHostId);
 
 timeslotRouter
   .route("/:id")

@@ -13,6 +13,13 @@ const getUserByIdModel = async (id) => {
   return rows[0] ?? null;
 };
 
+const getUserImageById = async (id) => {
+  const rows = await pool.query("SELECT image_url FROM users WHERE id = ?", [
+    id,
+  ]);
+  return rows[0] ?? null;
+};
+
 const addUser = async (user) => {
   const {
     id,
@@ -90,4 +97,11 @@ const getUserByEmail = async (email) => {
   return rows[0] ?? null;
 };
 
-export { listAllUsers, getUserByIdModel, addUser, getUserByEmail, modifyUser };
+export {
+  listAllUsers,
+  getUserByIdModel,
+  addUser,
+  getUserByEmail,
+  modifyUser,
+  getUserImageById,
+};

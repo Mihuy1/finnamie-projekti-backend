@@ -23,6 +23,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api", router);
+app.use("/uploads", express.static("uploads"));
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
