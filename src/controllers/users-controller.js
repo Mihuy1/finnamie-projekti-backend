@@ -49,10 +49,6 @@ const postUser = async (req, res, next) => {
       description,
     };
 
-    console.log("newUser", newUser);
-
-    console.log("Hashed password:", hashedPassword);
-
     const createdUser = await addUser(newUser);
 
     console.log(createdUser);

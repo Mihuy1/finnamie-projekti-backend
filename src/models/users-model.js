@@ -1,4 +1,5 @@
 import pool from "../utils/database.js";
+import { v4 as uuidv4 } from "uuid";
 
 const listAllUsers = async () => {
   const rows = await pool.query("SELECT * FROM users");
@@ -14,7 +15,7 @@ const getUserByIdModel = async (id) => {
 };
 
 const addUser = async (user) => {
-  const {
+  let {
     id,
     first_name,
     last_name,
@@ -24,6 +25,8 @@ const addUser = async (user) => {
     image_url,
     description,
   } = user;
+
+  if (!id) id = uuidv4();
 
   const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, image_url, description) 
               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;

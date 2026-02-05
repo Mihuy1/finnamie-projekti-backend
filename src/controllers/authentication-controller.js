@@ -64,7 +64,16 @@ const register = async (req, res, next) => {
         .status(409)
         .json({ message: "User with this email already exists" });
 
-    const { first_name, last_name, email, password } = req.body;
+    const { first_name, last_name, email, password, role } = req.body;
+
+    if (!role) return res.status(400).json({ message: "Invalid role." });
+
+    console.log("role:", role);
+
+    if (role !== "guest" && role !== "host")
+      return res
+        .status(400)
+        .json({ message: "Invalid role. Role must be 'guest' or 'host'." });
 
     const hashedPassword = await argon2.hash(password);
 
@@ -73,7 +82,7 @@ const register = async (req, res, next) => {
       last_name,
       email,
       password: hashedPassword,
-      role: "user",
+      role: role,
     };
 
     const result = await addUser(registeredUser);
