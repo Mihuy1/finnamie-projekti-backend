@@ -2,6 +2,8 @@ import { v4 as uuidv4 } from "uuid";
 import {
   addTimeSlot,
   deleteTimeslot,
+  getAvailableTimeslots,
+  getOwnedTimeslots,
   listAllTimeslot,
   timeslotById,
   timeslotHistory,
@@ -96,6 +98,22 @@ const getTimeslotHistory = async (req, res, next) => {
   }
 };
 
+const getTimeslotsByHostId = async (req, res, next) => {
+  try {
+    res.json(await getOwnedTimeslots(req.user.id));
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getAvailable = async (req, res, next) => {
+  try {
+    res.json(await getAvailableTimeslots());
+  } catch (err) {
+    next(err);
+  }
+};
+
 const checkMissingFields = (object) => {
   return Object.entries(object)
     .filter(([k, v]) => v === undefined || v === null || v === "")
@@ -109,4 +127,6 @@ export {
   updateExistingTimeslot,
   deleteExistingTimeslot,
   getTimeslotHistory,
+  getTimeslotsByHostId,
+  getAvailable,
 };
