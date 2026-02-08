@@ -3,6 +3,8 @@ import {
   uploadImage,
   uploadMultipleImages,
   updateImage,
+  deleteImageByTimeslotId,
+  getTimeslotImages,
 } from "../controllers/upload-controller.js";
 import { upload } from "../utils/multer.js";
 import { authorize } from "../middlewares.js";
@@ -10,16 +12,16 @@ import { authorize } from "../middlewares.js";
 const uploadRouter = express.Router();
 uploadRouter.use(authorize);
 
-// frontissa kun luodaan käyttäjä: uploadImage -> paluuarvosta url käyttäjän tietoihin -> addUser
+// frontissa luodaan hosti: uploadImage -> paluuarvosta url hostin tietoihin
 uploadRouter
   .route("/upload/users")
   .post(upload.single("image"), uploadImage)
   .put(upload.single("image"), updateImage);
 
-uploadRouter.post(
-  "/upload/timeslots/:timeslot_id",
-  upload.array("images", 10),
-  uploadMultipleImages,
-);
+uploadRouter
+  .route("/upload/timeslots/:timeslot_id")
+  .get(getTimeslotImages)
+  .post(upload.array("images", 10), uploadMultipleImages)
+  .delete(deleteImageByTimeslotId);
 
 export default uploadRouter;
