@@ -3,16 +3,24 @@ import cors from "cors";
 import "dotenv/config";
 import router from "./src/index.js";
 import cookieParser from "cookie-parser";
+import { createServer } from "node:http";
+import { Server } from "socket.io";
 
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:5173"],
+  },
+});
 
-// Kommenttiin testaamisen vuoksi.
-// app.use(
-//   cors({
-//     origin: "http://localhost:5173",
-//     credentials: true,
-//   }),
-// );
+io.on("connection", (socket) => {
+  console.log("a user connected from:", socket.id);
+  socket.on("chat message", (msg) => {
+    console.log("message: " + msg);
+    io.emit("chat message", "From the backend: " + msg);
+  });
+});
 
 app.use(
   cors({
@@ -37,6 +45,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT ?? 3000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log("Server is running on http://localhost:" + PORT);
 });
