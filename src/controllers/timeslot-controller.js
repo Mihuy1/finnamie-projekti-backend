@@ -10,6 +10,9 @@ import {
   updateTimeslot,
 } from "../models/timeslot-model.js";
 
+import { getTimeslotImageURLs } from "../models/upload-model.js";
+import { deleteImages } from "../utils/multer.js";
+
 const getTimeslot = async (req, res, next) => {
   try {
     res.json(await listAllTimeslot());
@@ -80,6 +83,8 @@ const updateExistingTimeslot = async (req, res, next) => {
 const deleteExistingTimeslot = async (req, res, next) => {
   try {
     await deleteTimeslot(req.params.id, req.user.id);
+    const urls = await getTimeslotImageURLs(req.params.id);
+    await deleteImages(urls.map((u) => u.url));
     res
       .status(200)
       .json({ message: "Timeslot deleted successfully. ID: " + req.params.id });
