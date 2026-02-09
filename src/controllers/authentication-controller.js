@@ -1,6 +1,8 @@
 import { addUser, getUserByEmail } from "../models/users-model.js";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
+import { addHostProfileByUserId } from "../models/host-profile-model.js";
+import { setHostActivitiesByUserId } from "../models/host-activities-model.js";
 
 const postLogin = async (req, res, next) => {
   console.log(req.body);
@@ -64,7 +66,24 @@ const register = async (req, res, next) => {
         .status(409)
         .json({ message: "User with this email already exists" });
 
-    const { first_name, last_name, email, password, role, country } = req.body;
+    const {
+      first_name,
+      last_name,
+      email,
+      password,
+      role,
+      country,
+      date_of_birth,
+      // Host specific fields (extracted from req.body)
+      phone_number,
+      street_address,
+      postal_code,
+      city,
+      bio,
+      experience_length,
+
+      activity_ids,
+    } = req.body;
 
     if (!role) return res.status(400).json({ message: "Invalid role." });
 
@@ -82,9 +101,26 @@ const register = async (req, res, next) => {
       password: hashedPassword,
       role: role,
       country,
+      date_of_birth,
     };
 
     const result = await addUser(registeredUser);
+
+    if (role === "host") {
+      const hostProfile = {
+        phone_number,
+        street_address,
+        postal_code,
+        city,
+        bio,
+        experience_length,
+      };
+
+      await addHostProfileByUserId(result.id, hostProfile);
+
+      if (activity_ids !== undefined)
+        await setHostActivitiesByUserId(result.id, activity_ids);
+    }
 
     res
       .status(200)

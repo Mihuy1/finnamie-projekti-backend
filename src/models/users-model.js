@@ -30,14 +30,15 @@ const addUser = async (user) => {
     password,
     role,
     country,
+    date_of_birth,
     image_url,
     description,
   } = user;
 
   if (!id) id = uuidv4();
 
-  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, country, image_url, description) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, country, date_of_birth, image_url, description) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   const params = [
     id,
     first_name,
@@ -46,6 +47,7 @@ const addUser = async (user) => {
     password,
     role,
     country,
+    date_of_birth,
     image_url,
     description,
   ].map((value) => value ?? null);
@@ -58,6 +60,7 @@ const addUser = async (user) => {
     last_name,
     email,
     role,
+    date_of_birth,
     country,
   };
 };
