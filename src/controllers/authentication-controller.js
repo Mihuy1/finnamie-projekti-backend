@@ -64,11 +64,9 @@ const register = async (req, res, next) => {
         .status(409)
         .json({ message: "User with this email already exists" });
 
-    const { first_name, last_name, email, password, role } = req.body;
+    const { first_name, last_name, email, password, role, country } = req.body;
 
     if (!role) return res.status(400).json({ message: "Invalid role." });
-
-    console.log("role:", role);
 
     if (role !== "guest" && role !== "host")
       return res
@@ -83,6 +81,7 @@ const register = async (req, res, next) => {
       email,
       password: hashedPassword,
       role: role,
+      country,
     };
 
     const result = await addUser(registeredUser);

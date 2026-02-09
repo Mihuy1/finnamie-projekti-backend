@@ -33,6 +33,7 @@ const postUser = async (req, res, next) => {
       email,
       password,
       role,
+      country,
       image_url,
       description,
     } = req.body;
@@ -45,6 +46,7 @@ const postUser = async (req, res, next) => {
       email,
       password: hashedPassword,
       role,
+      country,
       image_url,
       description,
     };
