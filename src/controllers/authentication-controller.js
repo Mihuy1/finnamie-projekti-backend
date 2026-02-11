@@ -79,7 +79,7 @@ const register = async (req, res, next) => {
       street_address,
       postal_code,
       city,
-      bio,
+      description,
       experience_length,
 
       activity_ids,
@@ -112,7 +112,7 @@ const register = async (req, res, next) => {
         street_address,
         postal_code,
         city,
-        bio,
+        description,
         experience_length,
       };
 

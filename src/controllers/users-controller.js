@@ -27,16 +27,8 @@ const getUserById = async (req, res, next) => {
 
 const postUser = async (req, res, next) => {
   try {
-    const {
-      first_name,
-      last_name,
-      email,
-      password,
-      role,
-      country,
-      image_url,
-      description,
-    } = req.body;
+    const { first_name, last_name, email, password, role, country, image_url } =
+      req.body;
 
     const hashedPassword = await argon2.hash(password);
     const newUser = {
@@ -48,7 +40,6 @@ const postUser = async (req, res, next) => {
       role,
       country,
       image_url,
-      description,
     };
 
     const createdUser = await addUser(newUser);

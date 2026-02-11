@@ -32,13 +32,12 @@ const addUser = async (user) => {
     country,
     date_of_birth,
     image_url,
-    description,
   } = user;
 
   if (!id) id = uuidv4();
 
-  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, country, date_of_birth, image_url, description) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, country, date_of_birth, image_url) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   const params = [
     id,
     first_name,
@@ -49,7 +48,6 @@ const addUser = async (user) => {
     country,
     date_of_birth,
     image_url,
-    description,
   ].map((value) => value ?? null);
 
   const rows = await pool.execute(sql, params);

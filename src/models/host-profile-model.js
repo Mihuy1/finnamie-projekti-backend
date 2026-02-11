@@ -15,7 +15,7 @@ export const addHostProfileByUserId = async (userId, profile) => {
     street_address,
     postal_code,
     city,
-    bio,
+    description,
     experience_length,
   } = profile;
 
@@ -25,7 +25,7 @@ export const addHostProfileByUserId = async (userId, profile) => {
   street_address,
   postal_code,
   city,
-  bio,
+  description,
   experience_length) VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
   const params = [
@@ -34,7 +34,7 @@ export const addHostProfileByUserId = async (userId, profile) => {
     street_address,
     postal_code,
     city,
-    bio,
+    description,
     experience_length,
   ].map((v) => v ?? null);
 
@@ -50,7 +50,7 @@ export const modifyHostProfileByUserId = async (userId, profile) => {
     "street_address",
     "postal_code",
     "city",
-    "bio",
+    "description",
     "experience_length",
   ];
 
