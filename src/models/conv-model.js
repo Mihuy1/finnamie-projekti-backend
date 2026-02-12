@@ -2,7 +2,7 @@ import pool from "../utils/database.js";
 
 export const getMessagesByConvIdModel = async (id) => {
   return pool.query(
-    "SELECT conv_id, sender_id, receiver_id, content, sent_at FROM messages WHERE conv_id = ? ORDER BY sent_at DESC",
+    "SELECT * FROM messages WHERE conv_id = ? ORDER BY sent_at ASC",
     [id],
   );
 };
