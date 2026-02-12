@@ -64,7 +64,15 @@ const addUser = async (user) => {
 };
 
 const modifyUser = async (id, user) => {
-  const { first_name, last_name, email, password } = user;
+  const {
+    first_name,
+    last_name,
+    email,
+    password,
+    role,
+    country,
+    date_of_birth,
+  } = user;
 
   const fields = [];
   const params = [];
@@ -84,6 +92,21 @@ const modifyUser = async (id, user) => {
   if (password !== undefined) {
     fields.push("password = ?");
     params.push(password);
+  }
+
+  if (role !== undefined) {
+    fields.push("role = ?");
+    params.push(role);
+  }
+
+  if (country !== undefined) {
+    fields.push("country = ?");
+    params.push(country);
+  }
+
+  if (date_of_birth !== undefined) {
+    fields.push("date_of_birth = ?");
+    params.push(date_of_birth);
   }
 
   if (fields.length === 0) return { affectedRows: 0 };

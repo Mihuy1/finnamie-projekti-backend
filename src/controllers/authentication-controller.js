@@ -1,11 +1,13 @@
-import { addUser, getUserByEmail } from "../models/users-model.js";
+import { addUser, getUserByEmail, modifyUser } from "../models/users-model.js";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
-import { addHostProfileByUserId } from "../models/host-profile-model.js";
+import {
+  addHostProfileByUserId,
+  modifyHostProfileByUserId,
+} from "../models/host-profile-model.js";
 import { setHostActivitiesByUserId } from "../models/host-activities-model.js";
 
 const postLogin = async (req, res, next) => {
-  console.log(req.body);
   try {
     const { email, password } = req.body ?? {};
 
@@ -71,6 +73,7 @@ const register = async (req, res, next) => {
       last_name,
       email,
       password,
+      confirmPassword,
       role,
       country,
       date_of_birth,
@@ -91,6 +94,12 @@ const register = async (req, res, next) => {
       return res
         .status(400)
         .json({ message: "Invalid role. Role must be 'guest' or 'host'." });
+
+    if (!password || !confirmPassword)
+      return res.status(400).json({ message: "Password not specified" });
+
+    if (password !== confirmPassword)
+      return res.status(400).json({ message: "Passwords do not match!" });
 
     const hashedPassword = await argon2.hash(password);
 
@@ -126,6 +135,75 @@ const register = async (req, res, next) => {
       .status(200)
       .json({ message: "Registration successful!", userId: result.id });
   } catch (error) {
+    res.status(400).json({ message: "something went wrong:", error });
+    next(error);
+  }
+};
+
+const updateProfile = async (req, res, next) => {
+  const role = req.user.role;
+  const id = req.user.id;
+  try {
+    const {
+      first_name,
+      last_name,
+      email,
+      password,
+      confirmPassword,
+      country,
+      date_of_birth,
+      // Host specific fields (extracted from req.body)
+      phone_number,
+      street_address,
+      postal_code,
+      city,
+      description,
+      experience_length,
+      activity_ids,
+    } = req.body;
+
+    let hashedPassword;
+
+    if (password) {
+      if (!confirmPassword)
+        return res
+          .status(400)
+          .json({ message: "Password confirmation required." });
+
+      if (password !== confirmPassword)
+        return res.status(400).json({ message: "Passwords do not match!" });
+
+      hashedPassword = await argon2.hash(password);
+    }
+
+    const updatedUser = {
+      first_name,
+      last_name,
+      email,
+      password: hashedPassword,
+      country,
+      date_of_birth,
+    };
+
+    await modifyUser(id, updatedUser);
+
+    if (role === "host") {
+      const hostUpdatedUser = {
+        phone_number,
+        street_address,
+        postal_code,
+        city,
+        description,
+        experience_length,
+      };
+      await modifyHostProfileByUserId(id, hostUpdatedUser);
+
+      if (activity_ids !== undefined)
+        await setHostActivitiesByUserId(id, activity_ids);
+    }
+
+    res.status(200).json({ message: "Profile updated successfully!" });
+  } catch (error) {
     next(error);
   }
 };
@@ -148,4 +226,4 @@ const logout = async (req, res) => {
   return res.status(200).json({ message: "Logged out" });
 };
 
-export { postLogin, getMe, register, logout };
+export { postLogin, register, updateProfile, getMe, logout };

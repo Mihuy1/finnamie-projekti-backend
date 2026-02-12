@@ -13,6 +13,6 @@ userRouter.use(authorize);
 
 userRouter.route("/").get(getUsers).post(allowRoles("admin"), postUser);
 
-userRouter.route("/:id").get(getUserById).put(allowSelfOrAdmin, putUser);
+userRouter.route("/:id").get(getUserById).put(allowRoles("admin"), putUser);
 
 export default userRouter;
