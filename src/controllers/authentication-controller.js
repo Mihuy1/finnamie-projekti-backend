@@ -6,6 +6,7 @@ import {
   modifyHostProfileByUserId,
 } from "../models/host-profile-model.js";
 import { setHostActivitiesByUserId } from "../models/host-activities-model.js";
+import isEmail from "validator/lib/isEmail.js";
 
 const postLogin = async (req, res, next) => {
   try {
@@ -103,6 +104,9 @@ const register = async (req, res, next) => {
 
     const hashedPassword = await argon2.hash(password);
 
+    if (!isEmail(email))
+      return res.status(400).json({ message: "Please enter a valid email!" });
+
     const registeredUser = {
       first_name,
       last_name,
@@ -175,6 +179,10 @@ const updateProfile = async (req, res, next) => {
 
       hashedPassword = await argon2.hash(password);
     }
+
+    if (email)
+      if (!isEmail(email))
+        return res.status(400).json({ message: "Please enter a valid email!" });
 
     const updatedUser = {
       first_name,
