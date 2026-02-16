@@ -6,6 +6,7 @@ import {
   getUserByIdModel,
   addUser,
   modifyUser,
+  getUserPublicInfoByid,
 } from "../models/users-model.js";
 
 const getUsers = async (req, res, next) => {
@@ -20,6 +21,19 @@ const getUserById = async (req, res, next) => {
   try {
     const { id } = req.params;
     res.json(await getUserByIdModel(id));
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getUserPublicInfo = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user = await getUserPublicInfoByid(id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json(user);
   } catch (error) {
     next(error);
   }
@@ -119,4 +133,4 @@ const putUser = async (req, res, next) => {
   }
 };
 
-export { getUsers, getUserById, postUser, putUser };
+export { getUsers, getUserById, getUserPublicInfo, postUser, putUser };

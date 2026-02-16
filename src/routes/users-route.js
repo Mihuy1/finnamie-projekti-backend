@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getUserById,
+  getUserPublicInfo,
   getUsers,
   postUser,
   putUser,
@@ -8,6 +9,8 @@ import {
 import { allowRoles, allowSelfOrAdmin, authorize } from "../middlewares.js";
 
 const userRouter = express.Router();
+
+userRouter.route("/public/:id").get(getUserPublicInfo);
 
 userRouter.use(authorize);
 

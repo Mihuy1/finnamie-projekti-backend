@@ -140,6 +140,7 @@ const register = async (req, res, next) => {
       .json({ message: "Registration successful!", userId: result.id });
   } catch (error) {
     res.status(400).json({ message: "something went wrong:", error });
+    console.log("Error:", error);
     next(error);
   }
 };
