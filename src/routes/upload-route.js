@@ -10,6 +10,9 @@ import { upload } from "../utils/multer.js";
 import { authorize } from "../middlewares.js";
 
 const uploadRouter = express.Router();
+
+uploadRouter.get("/upload/timeslots/:timeslot_id", getTimeslotImages);
+
 uploadRouter.use(authorize);
 
 // frontissa luodaan hosti: uploadImage -> paluuarvosta url hostin tietoihin
@@ -20,7 +23,6 @@ uploadRouter
 
 uploadRouter
   .route("/upload/timeslots/:timeslot_id")
-  .get(getTimeslotImages)
   .post(upload.array("images", 10), uploadMultipleImages)
   .delete(deleteImageByTimeslotId);
 
