@@ -6,7 +6,27 @@ const listAllTimeslot = async () => {
 };
 
 const timeslotById = async (id) => {
-  return await pool.query("SELECT * FROM timeslot WHERE id = ?", [id]);
+  const timeslot = await pool.query("SELECT * FROM timeslot WHERE id = ?", [
+    id,
+  ]);
+
+  if (timeslot.length === 0) return [];
+
+  // Get associated activities
+  const activities = await pool.query(
+    `SELECT a.id, a.name 
+     FROM timeslot_activities ta 
+     JOIN activities a ON a.id = ta.activity_id 
+     WHERE ta.timeslot_id = ?`,
+    [id],
+  );
+
+  return [
+    {
+      ...timeslot[0],
+      activities: activities,
+    },
+  ];
 };
 
 // varmaan turha
@@ -29,8 +49,8 @@ const getAvailableTimeslots = async () => {
 
 const addTimeSlot = async (timeslot) => {
   const q = `INSERT INTO timeslot(id, host_id, type, start_time, end_time, description,
-                          city, latitude_deg, longitude_deg, activity_type)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                          city, latitude_deg, longitude_deg)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   const {
     id,
     host_id,
@@ -41,7 +61,6 @@ const addTimeSlot = async (timeslot) => {
     city,
     latitude_deg,
     longitude_deg,
-    activity_type,
   } = timeslot;
 
   /*
@@ -59,7 +78,6 @@ const addTimeSlot = async (timeslot) => {
     city,
     latitude_deg,
     longitude_deg,
-    activity_type,
   ];
 
   await pool.execute(q, params);
@@ -81,7 +99,6 @@ const updateTimeslot = async (id, data) => {
     "city",
     "latitude_deg",
     "longitude_deg",
-    "activity_type",
   ];
 
   const setClauses = [];
@@ -117,6 +134,29 @@ const deleteTimeslot = async (id, host_id) => {
     throw new Error("Timeslot owner and requester do not match.");
 };
 
+const getTimeslotsWithHost = async () => {
+  const timeslots = await pool.query(
+    `SELECT t.*, u.first_name, u.last_name 
+     FROM timeslot t 
+     JOIN users u ON t.host_id = u.id 
+     WHERE u.role = 'host' AND t.res_status = 'available'`,
+  );
+
+  // Get activities for each timeslot
+  for (let timeslot of timeslots) {
+    const activities = await pool.query(
+      `SELECT a.id, a.name 
+       FROM timeslot_activities ta 
+       JOIN activities a ON a.id = ta.activity_id 
+       WHERE ta.timeslot_id = ?`,
+      [timeslot.id],
+    );
+    timeslot.activities = activities;
+  }
+
+  return timeslots;
+};
+
 export {
   listAllTimeslot,
   timeslotById,
@@ -126,4 +166,5 @@ export {
   timeslotHistory,
   getOwnedTimeslots,
   getAvailableTimeslots,
+  getTimeslotsWithHost,
 };

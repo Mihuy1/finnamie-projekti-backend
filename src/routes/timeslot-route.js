@@ -7,6 +7,7 @@ import {
   getTimeslotById,
   getTimeslotHistory,
   getTimeslotsByHostId,
+  getTimeslotsWithHost,
   updateExistingTimeslot,
 } from "../controllers/timeslot-controller.js";
 import { allowRoles, authorize } from "../middlewares.js";
@@ -14,6 +15,7 @@ import { allowRoles, authorize } from "../middlewares.js";
 const timeslotRouter = express.Router();
 
 timeslotRouter.route("/available").get(getAvailable); // tarkotuksella ennen .use(authorize)
+timeslotRouter.route("/availableWithHost").get(getTimeslotsWithHost);
 
 timeslotRouter.use(authorize);
 
