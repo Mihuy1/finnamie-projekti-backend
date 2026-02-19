@@ -23,6 +23,15 @@ const getUserPublicInfoByid = async (id) => {
   return rows[0] ?? null;
 };
 
+const getUserProfileInfoById = async (id) => {
+  const rows = await pool.query(
+    "SELECT first_name, last_name, email, role, country, date_of_birth, image_url FROM users WHERE id = ?",
+    [id],
+  );
+
+  return rows[0];
+};
+
 const getUserImageById = async (id) => {
   const rows = await pool.query("SELECT image_url FROM users WHERE id = ?", [
     id,
@@ -144,4 +153,5 @@ export {
   getUserByEmail,
   modifyUser,
   getUserImageById,
+  getUserProfileInfoById,
 };

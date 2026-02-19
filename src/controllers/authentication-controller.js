@@ -1,11 +1,20 @@
-import { addUser, getUserByEmail, modifyUser } from "../models/users-model.js";
+import {
+  addUser,
+  getUserByEmail,
+  getUserProfileInfoById,
+  modifyUser,
+} from "../models/users-model.js";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import {
   addHostProfileByUserId,
+  getHostProfileUserId,
   modifyHostProfileByUserId,
 } from "../models/host-profile-model.js";
-import { setHostActivitiesByUserId } from "../models/host-activities-model.js";
+import {
+  getHostActivitiesByUserId,
+  setHostActivitiesByUserId,
+} from "../models/host-activities-model.js";
 import isEmail from "validator/lib/isEmail.js";
 
 const postLogin = async (req, res, next) => {
@@ -35,7 +44,6 @@ const postLogin = async (req, res, next) => {
       id: user.id?.toString?.() ?? String(user.id),
       first_name: user.first_name,
       last_name: user.last_name,
-      email: user.email,
       role: user.role,
     };
 
@@ -217,6 +225,38 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
+const getProfileInfo = async (req, res, next) => {
+  try {
+    const user = await getUserProfileInfoById(req.user.id);
+
+    if (!user) return res.status(404).json({ message: "Profile not found" });
+
+    let finalUser = user;
+
+    if (user.role === "host") {
+      const hostUser = await getHostProfileUserId(req.user.id);
+      const hostActivites = await getHostActivitiesByUserId(req.user.id);
+
+      if (!hostUser)
+        return res.status(404).json({ message: "Host profile not found" });
+
+      finalUser = {
+        ...user,
+        phone_number: hostUser.phone_number,
+        street_address: hostUser.street_address,
+        postal_code: hostUser.postal_code,
+        city: hostUser.city,
+        description: hostUser.description,
+        experience_length: hostUser.experience_length,
+        host_activities: hostActivites,
+      };
+    }
+    return res.status(200).json(finalUser);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getMe = async (req, res) => {
   res.status(200).json({
     user: req.user,
@@ -235,4 +275,4 @@ const logout = async (req, res) => {
   return res.status(200).json({ message: "Logged out" });
 };
 
-export { postLogin, register, updateProfile, getMe, logout };
+export { postLogin, register, updateProfile, getProfileInfo, getMe, logout };
