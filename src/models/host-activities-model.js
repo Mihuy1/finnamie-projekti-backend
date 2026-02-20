@@ -17,11 +17,26 @@ export const getHostActivitiesByUserId = async (userId) => {
 };
 
 export const setHostActivitiesByUserId = async (userId, activityIds) => {
-  const ids = Array.isArray(activityIds)
-    ? activityIds
-        .map((x) => Number(x))
-        .filter((n) => Number.isInteger(n) && n > 0)
+  const rawIds = Array.isArray(activityIds)
+    ? activityIds.map((item) => {
+        if (item && typeof item === "object") return item.id;
+        return item;
+      })
     : [];
+
+  const ids = [
+    ...new Set(
+      rawIds.map((x) => Number(x)).filter((n) => Number.isInteger(n) && n > 0),
+    ),
+  ];
+
+  if (
+    Array.isArray(activityIds) &&
+    activityIds.length > 0 &&
+    ids.length === 0
+  ) {
+    throw new Error("Invalid activity_ids payload");
+  }
 
   const hostProfiles = await pool.query(
     "SELECT id FROM host_profiles WHERE user_id = ?",

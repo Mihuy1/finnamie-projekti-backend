@@ -53,8 +53,6 @@ const postLogin = async (req, res, next) => {
       expiresIn: "2h",
     });
 
-    console.log("Login token: ", token);
-
     res.cookie("token", token, {
       httpOnly: true,
       secure: false,
