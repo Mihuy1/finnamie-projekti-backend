@@ -8,7 +8,6 @@ import {
 import { deleteImages } from "../utils/multer.js";
 import { getUserImageById } from "../models/users-model.js";
 import { getOwnedTimeslots } from "../models/timeslot-model.js";
-import { time } from "console";
 
 export const uploadMultipleImages = async (req, res, next) => {
   const SUBDIR = "timeslots";
@@ -44,11 +43,12 @@ export const uploadMultipleImages = async (req, res, next) => {
   }
 };
 
-export const uploadImage = (req, res, next) => {
+export const uploadImage = async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
     const filename = path.basename(req.file.path);
     const url = `/uploads/users/${filename}`;
+    await updateUserImage(url, req.user.id);
     res.status(201).json({
       filename,
       url,
