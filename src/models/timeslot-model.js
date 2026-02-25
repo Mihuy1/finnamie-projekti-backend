@@ -1,4 +1,5 @@
 import pool from "../utils/database.js";
+import { getActivitiesByTimeslotId } from "./timeslot-activities-model.js";
 
 const listAllTimeslot = async () => {
   const rows = await pool.query("SELECT * FROM timeslot");
@@ -37,8 +38,19 @@ const timeslotHistory = async (id) => {
   );
 };
 
+const attachAvctivities = async (timeslots) => {
+  for (const t of timeslots) {
+    t.activities = await getActivitiesByTimeslotId(t.id);
+  }
+
+  return timeslots;
+};
+
 const getOwnedTimeslots = async (id) => {
-  return await pool.query("SELECT * FROM timeslot WHERE host_id = ?", [id]);
+  const rows = await pool.query("SELECT * FROM timeslot WHERE host_id = ?", [
+    id,
+  ]);
+  return attachAvctivities(rows);
 };
 
 const getAvailableTimeslots = async () => {
