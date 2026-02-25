@@ -61,6 +61,7 @@ const addTimeSlot = async (timeslot) => {
     city,
     latitude_deg,
     longitude_deg,
+    address,
   } = timeslot;
 
   /*
@@ -78,6 +79,7 @@ const addTimeSlot = async (timeslot) => {
     city,
     latitude_deg,
     longitude_deg,
+    address,
   ];
 
   await pool.execute(q, params);
@@ -99,6 +101,7 @@ const updateTimeslot = async (id, data) => {
     "city",
     "latitude_deg",
     "longitude_deg",
+    "address",
   ];
 
   const setClauses = [];
