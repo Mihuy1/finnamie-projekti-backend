@@ -61,8 +61,8 @@ const getAvailableTimeslots = async () => {
 
 const addTimeSlot = async (timeslot) => {
   const q = `INSERT INTO timeslot(id, host_id, type, start_time, end_time, description,
-                          city, latitude_deg, longitude_deg)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                          city, latitude_deg, longitude_deg, address)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   const {
     id,
     host_id,
@@ -75,11 +75,6 @@ const addTimeSlot = async (timeslot) => {
     longitude_deg,
     address,
   } = timeslot;
-
-  /*
-  start_time = start_time.replace("Z", "").replace("T", " ");
-  end_time = end_time.replace("Z", "").replace("T", " ");
-  */
 
   const params = [
     id,
@@ -95,7 +90,6 @@ const addTimeSlot = async (timeslot) => {
   ];
 
   await pool.execute(q, params);
-  // Return inserted row to display for the host.
   const rows = await pool.execute("SELECT * FROM timeslot WHERE id = ?", [id]);
 
   return rows[0];
