@@ -1,5 +1,6 @@
 import pool from "../utils/database.js";
 import { getActivitiesByTimeslotId } from "./timeslot-activities-model.js";
+import { getTimeslotImageURLs } from "./upload-model.js";
 
 const listAllTimeslot = async () => {
   const rows = await pool.query("SELECT * FROM timeslot");
@@ -160,6 +161,8 @@ const getTimeslotsWithHost = async () => {
        WHERE ta.timeslot_id = ?`,
       [timeslot.id],
     );
+    const images = await getTimeslotImageURLs(timeslot.id);
+    timeslot.images = images;
     timeslot.activities = activities;
   }
 
