@@ -22,6 +22,12 @@ export const deleteTimeslotImages = async (id) => {
   return affectedRows;
 };
 
+export const deleteImageByTimeslotIdAndURL = async (id, url) => {
+  const q = "DELETE FROM timeslot_images WHERE timeslot_id = ? AND url = ?";
+  const { affectedRows } = await pool.execute(q, [id, url]);
+  return affectedRows;
+};
+
 export const getTimeslotImageURLs = async (id) => {
   return await pool.execute(
     "SELECT url FROM timeslot_images WHERE timeslot_id = ?",

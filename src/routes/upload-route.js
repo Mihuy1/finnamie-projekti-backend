@@ -3,11 +3,12 @@ import {
   uploadImage,
   uploadMultipleImages,
   updateImage,
-  deleteImageByTimeslotId,
   getTimeslotImages,
+  deleteTimeslotImageByUrl,
 } from "../controllers/upload-controller.js";
 import { upload } from "../utils/multer.js";
 import { authorize } from "../middlewares.js";
+import { deleteImageByTimeslotIdAndURL } from "../models/upload-model.js";
 
 const uploadRouter = express.Router();
 
@@ -21,9 +22,18 @@ uploadRouter
   .post(upload.single("image"), uploadImage)
   .put(upload.single("image"), updateImage);
 
-uploadRouter
-  .route("/upload/timeslots/:timeslot_id")
-  .post(upload.array("images", 10), uploadMultipleImages)
-  .delete(deleteImageByTimeslotId);
+uploadRouter.route("/upload/timeslots/:timeslot_id").post(
+  upload.fields([
+    { name: "images", maxCount: 10 },
+    { name: "image", maxCount: 10 },
+  ]),
+  uploadMultipleImages,
+);
+// .delete(deleteImageByTimeslotId);
+
+uploadRouter.delete(
+  "/upload/timeslots/:timeslot_id/",
+  deleteTimeslotImageByUrl,
+);
 
 export default uploadRouter;
