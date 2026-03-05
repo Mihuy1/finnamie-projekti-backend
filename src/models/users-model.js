@@ -15,12 +15,11 @@ const getUserByIdModel = async (id) => {
 };
 
 const getUserPublicInfoByid = async (id) => {
-  const rows = await pool.query(
-    "SELECT first_name, last_name FROM users WHERE id = ?",
-    [id],
-  );
+  const rows =
+    "SELECT users.first_name, users.last_name, users.role, users.country, users.date_of_birth, users.image_url, host_profiles.city, host_profiles.description, host_profiles.experience_length FROM users LEFT JOIN host_profiles ON users.id = host_profiles.user_id WHERE users.id = ?";
+  const result = await pool.query(rows, [id]);
 
-  return rows[0] ?? null;
+  return result[0] ?? null;
 };
 
 const getUserProfileInfoById = async (id) => {

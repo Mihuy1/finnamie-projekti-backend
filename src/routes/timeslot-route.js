@@ -16,6 +16,7 @@ const timeslotRouter = express.Router();
 
 timeslotRouter.route("/available").get(getAvailable); // tarkotuksella ennen .use(authorize)
 timeslotRouter.route("/availableWithHost").get(getTimeslotsWithHost);
+timeslotRouter.route("/host/:id").get(getTimeslotsByHostId);
 
 timeslotRouter.use(authorize);
 
@@ -25,7 +26,6 @@ timeslotRouter
   .post(allowRoles("host", "admin"), createNewTimeslot);
 
 timeslotRouter.route("/history").get(getTimeslotHistory);
-timeslotRouter.route("/host/:id").get(getTimeslotsByHostId);
 
 timeslotRouter
   .route("/:id")

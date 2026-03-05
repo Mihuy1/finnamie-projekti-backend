@@ -8,6 +8,7 @@ import {
   modifyUser,
   getUserPublicInfoByid,
 } from "../models/users-model.js";
+import { getHostActivitiesByUserId } from "../models/host-activities-model.js";
 
 const getUsers = async (req, res, next) => {
   try {
@@ -32,6 +33,11 @@ const getUserPublicInfo = async (req, res, next) => {
     const user = await getUserPublicInfoByid(id);
 
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.role === "host") {
+      const host_activities = await getHostActivitiesByUserId(id);
+      return res.json({ ...user, host_activities });
+    }
 
     res.json(user);
   } catch (error) {

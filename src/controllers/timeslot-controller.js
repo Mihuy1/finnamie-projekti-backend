@@ -121,7 +121,7 @@ const getTimeslotHistory = async (req, res, next) => {
 
 const getTimeslotsByHostId = async (req, res, next) => {
   try {
-    res.json(await getOwnedTimeslots(req.user.id));
+    res.json(await getOwnedTimeslots(req.params.id));
   } catch (err) {
     next(err);
   }
