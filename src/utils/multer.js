@@ -40,23 +40,28 @@ export const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-export async function deleteImage(fileUrl) {
-  if (!fileUrl) return;
+export async function deleteImages(fileUrls) {
+  if (!fileUrls) return;
+  const urls = Array.isArray(fileUrls) ? fileUrls : [fileUrls];
 
-  if (!fileUrl.startsWith("/uploads/")) {
-    throw new Error("Invalid file path");
-  }
+  for (const fileUrl of urls) {
+    if (!fileUrl.startsWith("/uploads/")) {
+      console.warn("Skipped invalid file path:", fileUrl);
+      continue; // Skip invalid paths
+    }
 
-  const absolutePath = path.resolve("." + fileUrl);
+    const absolutePath = path.resolve("." + fileUrl);
 
-  try {
-    fs.unlink(absolutePath, (err) => {
-      if (err) throw err;
-    });
-    console.log("Image deleted:", absolutePath);
-  } catch (err) {
-    if (err.code !== "ENOENT") {
-      throw err;
+    try {
+      await fs.promises.unlink(absolutePath);
+      console.log("Image deleted:", absolutePath);
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        console.warn("File not found, skipped:", absolutePath);
+      } else {
+        console.error("Error deleting file:", absolutePath, err);
+        throw err;
+      }
     }
   }
 }

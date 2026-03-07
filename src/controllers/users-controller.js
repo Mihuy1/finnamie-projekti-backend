@@ -6,7 +6,9 @@ import {
   getUserByIdModel,
   addUser,
   modifyUser,
+  getUserPublicInfoByid,
 } from "../models/users-model.js";
+import { getHostActivitiesByUserId } from "../models/host-activities-model.js";
 
 const getUsers = async (req, res, next) => {
   try {
@@ -25,17 +27,28 @@ const getUserById = async (req, res, next) => {
   }
 };
 
+const getUserPublicInfo = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user = await getUserPublicInfoByid(id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.role === "host") {
+      const host_activities = await getHostActivitiesByUserId(id);
+      return res.json({ ...user, host_activities });
+    }
+
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const postUser = async (req, res, next) => {
   try {
-    const {
-      first_name,
-      last_name,
-      email,
-      password,
-      role,
-      image_url,
-      description,
-    } = req.body;
+    const { first_name, last_name, email, password, role, country, image_url } =
+      req.body;
 
     const hashedPassword = await argon2.hash(password);
     const newUser = {
@@ -45,8 +58,8 @@ const postUser = async (req, res, next) => {
       email,
       password: hashedPassword,
       role,
+      country,
       image_url,
-      description,
     };
 
     const createdUser = await addUser(newUser);
@@ -65,15 +78,6 @@ const postUser = async (req, res, next) => {
 const putUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-
-    // tartteeko tätä, kun route käyttää allowSelfOrAdmin
-    if (req.user) {
-      if (req.user.id !== id && req.user.role !== "admin") {
-        return res.status(403).json({
-          message: "Forbidden: You can only modify your own account.",
-        });
-      }
-    }
 
     const {
       first_name,
@@ -135,4 +139,4 @@ const putUser = async (req, res, next) => {
   }
 };
 
-export { getUsers, getUserById, postUser, putUser };
+export { getUsers, getUserById, getUserPublicInfo, postUser, putUser };

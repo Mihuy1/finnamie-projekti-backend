@@ -3,16 +3,12 @@ import cors from "cors";
 import "dotenv/config";
 import router from "./src/index.js";
 import cookieParser from "cookie-parser";
+import { createServer } from "node:http";
+import { createSocket } from "./socket.js";
 
 const app = express();
-
-// Kommenttiin testaamisen vuoksi.
-// app.use(
-//   cors({
-//     origin: "http://localhost:5173",
-//     credentials: true,
-//   }),
-// );
+const server = createServer(app);
+createSocket(server);
 
 app.use(
   cors({
@@ -37,6 +33,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT ?? 3000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log("Server is running on http://localhost:" + PORT);
 });

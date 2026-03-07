@@ -7,11 +7,17 @@ import {
   getTimeslotById,
   getTimeslotHistory,
   getTimeslotsByHostId,
+  getTimeslotsWithHost,
   updateExistingTimeslot,
 } from "../controllers/timeslot-controller.js";
 import { allowRoles, authorize } from "../middlewares.js";
 
 const timeslotRouter = express.Router();
+
+timeslotRouter.route("/available").get(getAvailable); // tarkotuksella ennen .use(authorize)
+timeslotRouter.route("/availableWithHost").get(getTimeslotsWithHost);
+timeslotRouter.route("/host/:id").get(getTimeslotsByHostId);
+
 timeslotRouter.use(authorize);
 
 timeslotRouter
@@ -20,8 +26,6 @@ timeslotRouter
   .post(allowRoles("host", "admin"), createNewTimeslot);
 
 timeslotRouter.route("/history").get(getTimeslotHistory);
-timeslotRouter.route("/available").get(getAvailable);
-timeslotRouter.route("/host/:id").get(getTimeslotsByHostId);
 
 timeslotRouter
   .route("/:id")

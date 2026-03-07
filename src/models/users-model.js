@@ -14,6 +14,23 @@ const getUserByIdModel = async (id) => {
   return rows[0] ?? null;
 };
 
+const getUserPublicInfoByid = async (id) => {
+  const rows =
+    "SELECT users.first_name, users.last_name, users.role, users.country, users.date_of_birth, users.image_url, host_profiles.city, host_profiles.description, host_profiles.experience_length FROM users LEFT JOIN host_profiles ON users.id = host_profiles.user_id WHERE users.id = ?";
+  const result = await pool.query(rows, [id]);
+
+  return result[0] ?? null;
+};
+
+const getUserProfileInfoById = async (id) => {
+  const rows = await pool.query(
+    "SELECT first_name, last_name, email, role, country, date_of_birth, image_url FROM users WHERE id = ?",
+    [id],
+  );
+
+  return rows[0];
+};
+
 const getUserImageById = async (id) => {
   const rows = await pool.query("SELECT image_url FROM users WHERE id = ?", [
     id,
@@ -29,14 +46,15 @@ const addUser = async (user) => {
     email,
     password,
     role,
+    country,
+    date_of_birth,
     image_url,
-    description,
   } = user;
 
   if (!id) id = uuidv4();
 
-  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, image_url, description) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, country, date_of_birth, image_url) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   const params = [
     id,
     first_name,
@@ -44,8 +62,9 @@ const addUser = async (user) => {
     email,
     password,
     role,
+    country,
+    date_of_birth,
     image_url,
-    description,
   ].map((value) => value ?? null);
 
   const rows = await pool.execute(sql, params);
@@ -56,11 +75,21 @@ const addUser = async (user) => {
     last_name,
     email,
     role,
+    date_of_birth,
+    country,
   };
 };
 
 const modifyUser = async (id, user) => {
-  const { first_name, last_name, email, password } = user;
+  const {
+    first_name,
+    last_name,
+    email,
+    password,
+    role,
+    country,
+    date_of_birth,
+  } = user;
 
   const fields = [];
   const params = [];
@@ -80,6 +109,21 @@ const modifyUser = async (id, user) => {
   if (password !== undefined) {
     fields.push("password = ?");
     params.push(password);
+  }
+
+  if (role !== undefined) {
+    fields.push("role = ?");
+    params.push(role);
+  }
+
+  if (country !== undefined) {
+    fields.push("country = ?");
+    params.push(country);
+  }
+
+  if (date_of_birth !== undefined) {
+    fields.push("date_of_birth = ?");
+    params.push(date_of_birth);
   }
 
   if (fields.length === 0) return { affectedRows: 0 };
@@ -103,8 +147,10 @@ const getUserByEmail = async (email) => {
 export {
   listAllUsers,
   getUserByIdModel,
+  getUserPublicInfoByid,
   addUser,
   getUserByEmail,
   modifyUser,
   getUserImageById,
+  getUserProfileInfoById,
 };

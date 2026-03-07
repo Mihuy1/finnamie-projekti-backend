@@ -8,7 +8,12 @@ import {
   timeslotById,
   timeslotHistory,
   updateTimeslot,
+  getTimeslotsWithHost as getTimeslotsWithHostModel,
 } from "../models/timeslot-model.js";
+
+import { getTimeslotImageURLs } from "../models/upload-model.js";
+import { deleteImages } from "../utils/multer.js";
+import { setActivitiesForTimeslot } from "../models/timeslot-activities-model.js";
 
 const getTimeslot = async (req, res, next) => {
   try {
@@ -37,7 +42,8 @@ const createNewTimeslot = async (req, res, next) => {
       city,
       latitude_deg,
       longitude_deg,
-      activity_type, // indoor/outdoor
+      address,
+      activity_ids, // indoor/outdoor
     } = req.body;
 
     const timeslot = {
@@ -50,7 +56,7 @@ const createNewTimeslot = async (req, res, next) => {
       city,
       latitude_deg,
       longitude_deg,
-      activity_type,
+      address,
     };
 
     const missing = checkMissingFields(Object.entries(timeslot));
@@ -60,6 +66,11 @@ const createNewTimeslot = async (req, res, next) => {
         .json({ message: "Missing fields found.", missing });
 
     const addedTimeslot = await addTimeSlot(timeslot);
+
+    if (activity_ids != undefined) {
+      await setActivitiesForTimeslot(addedTimeslot.id, activity_ids);
+    }
+
     res.status(201).json({
       message: "Timeslot added succesfully.",
       timeslot: addedTimeslot,
@@ -71,7 +82,15 @@ const createNewTimeslot = async (req, res, next) => {
 
 const updateExistingTimeslot = async (req, res, next) => {
   try {
-    res.json(await updateTimeslot(req.params.id, req.body));
+    const { activity_ids, ...timeslotData } = req.body;
+
+    const updated = await updateTimeslot(req.params.id, timeslotData);
+
+    if (activity_ids !== undefined) {
+      await setActivitiesForTimeslot(req.params.id, activity_ids);
+    }
+
+    res.json(updated);
   } catch (err) {
     next(err);
   }
@@ -80,6 +99,8 @@ const updateExistingTimeslot = async (req, res, next) => {
 const deleteExistingTimeslot = async (req, res, next) => {
   try {
     await deleteTimeslot(req.params.id, req.user.id);
+    const urls = await getTimeslotImageURLs(req.params.id);
+    await deleteImages(urls.map((u) => u.url));
     res
       .status(200)
       .json({ message: "Timeslot deleted successfully. ID: " + req.params.id });
@@ -100,7 +121,7 @@ const getTimeslotHistory = async (req, res, next) => {
 
 const getTimeslotsByHostId = async (req, res, next) => {
   try {
-    res.json(await getOwnedTimeslots(req.user.id));
+    res.json(await getOwnedTimeslots(req.params.id));
   } catch (err) {
     next(err);
   }
@@ -120,6 +141,14 @@ const checkMissingFields = (object) => {
     .map(([k]) => k);
 };
 
+const getTimeslotsWithHost = async (req, res, next) => {
+  try {
+    res.json(await getTimeslotsWithHostModel());
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   getTimeslot,
   getTimeslotById,
@@ -129,4 +158,5 @@ export {
   getTimeslotHistory,
   getTimeslotsByHostId,
   getAvailable,
+  getTimeslotsWithHost,
 };

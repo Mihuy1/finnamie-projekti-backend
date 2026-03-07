@@ -1,4 +1,6 @@
 import pool from "../utils/database.js";
+import { getActivitiesByTimeslotId } from "./timeslot-activities-model.js";
+import { getTimeslotImageURLs } from "./upload-model.js";
 
 const listAllTimeslot = async () => {
   const rows = await pool.query("SELECT * FROM timeslot");
@@ -6,7 +8,27 @@ const listAllTimeslot = async () => {
 };
 
 const timeslotById = async (id) => {
-  return await pool.query("SELECT * FROM timeslot WHERE id = ?", [id]);
+  const timeslot = await pool.query("SELECT * FROM timeslot WHERE id = ?", [
+    id,
+  ]);
+
+  if (timeslot.length === 0) return [];
+
+  // Get associated activities
+  const activities = await pool.query(
+    `SELECT a.id, a.name 
+     FROM timeslot_activities ta 
+     JOIN activities a ON a.id = ta.activity_id 
+     WHERE ta.timeslot_id = ?`,
+    [id],
+  );
+
+  return [
+    {
+      ...timeslot[0],
+      activities: activities,
+    },
+  ];
 };
 
 // varmaan turha
@@ -17,8 +39,19 @@ const timeslotHistory = async (id) => {
   );
 };
 
+const attachAvctivities = async (timeslots) => {
+  for (const t of timeslots) {
+    t.activities = await getActivitiesByTimeslotId(t.id);
+  }
+
+  return timeslots;
+};
+
 const getOwnedTimeslots = async (id) => {
-  return await pool.query("SELECT * FROM timeslot WHERE host_id = ?", [id]);
+  const rows = await pool.query("SELECT * FROM timeslot WHERE host_id = ?", [
+    id,
+  ]);
+  return attachAvctivities(rows);
 };
 
 const getAvailableTimeslots = async () => {
@@ -29,7 +62,7 @@ const getAvailableTimeslots = async () => {
 
 const addTimeSlot = async (timeslot) => {
   const q = `INSERT INTO timeslot(id, host_id, type, start_time, end_time, description,
-                          city, latitude_deg, longitude_deg, activity_type)
+                          city, latitude_deg, longitude_deg, address)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   const {
     id,
@@ -41,13 +74,8 @@ const addTimeSlot = async (timeslot) => {
     city,
     latitude_deg,
     longitude_deg,
-    activity_type,
+    address,
   } = timeslot;
-
-  /*
-  start_time = start_time.replace("Z", "").replace("T", " ");
-  end_time = end_time.replace("Z", "").replace("T", " ");
-  */
 
   const params = [
     id,
@@ -59,11 +87,10 @@ const addTimeSlot = async (timeslot) => {
     city,
     latitude_deg,
     longitude_deg,
-    activity_type,
+    address,
   ];
 
   await pool.execute(q, params);
-  // Return inserted row to display for the host.
   const rows = await pool.execute("SELECT * FROM timeslot WHERE id = ?", [id]);
 
   return rows[0];
@@ -81,7 +108,7 @@ const updateTimeslot = async (id, data) => {
     "city",
     "latitude_deg",
     "longitude_deg",
-    "activity_type",
+    "address",
   ];
 
   const setClauses = [];
@@ -117,6 +144,31 @@ const deleteTimeslot = async (id, host_id) => {
     throw new Error("Timeslot owner and requester do not match.");
 };
 
+const getTimeslotsWithHost = async () => {
+  const timeslots = await pool.query(
+    `SELECT t.*, u.first_name, u.last_name 
+     FROM timeslot t 
+     JOIN users u ON t.host_id = u.id 
+     WHERE u.role = 'host' AND t.res_status = 'available'`,
+  );
+
+  // Get activities for each timeslot
+  for (let timeslot of timeslots) {
+    const activities = await pool.query(
+      `SELECT a.id, a.name 
+       FROM timeslot_activities ta 
+       JOIN activities a ON a.id = ta.activity_id 
+       WHERE ta.timeslot_id = ?`,
+      [timeslot.id],
+    );
+    const images = await getTimeslotImageURLs(timeslot.id);
+    timeslot.images = images;
+    timeslot.activities = activities;
+  }
+
+  return timeslots;
+};
+
 export {
   listAllTimeslot,
   timeslotById,
@@ -126,4 +178,5 @@ export {
   timeslotHistory,
   getOwnedTimeslots,
   getAvailableTimeslots,
+  getTimeslotsWithHost,
 };
