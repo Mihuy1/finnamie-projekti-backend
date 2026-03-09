@@ -232,9 +232,11 @@ const getProfileInfo = async (req, res, next) => {
     let finalUser = user;
 
     if (user.role === "host") {
+      console.log(req.user);
+
       const hostUser = await getHostProfileUserId(req.user.id);
       const hostActivites = await getHostActivitiesByUserId(req.user.id);
-
+      console.log(hostUser);
       if (!hostUser)
         return res.status(404).json({ message: "Host profile not found" });
 
