@@ -55,8 +55,8 @@ const postLogin = async (req, res, next) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.envNODE_ENV === "production",
-      sameSite: process.envNODE_ENV === "production" ? "None" : "Strict",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Strict",
       maxAge: 7200000,
     });
 
@@ -267,8 +267,8 @@ const getMe = async (req, res) => {
 const logout = async (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: false,
-    sameSite: "Strict",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Strict",
     path: "/",
   });
 
