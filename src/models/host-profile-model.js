@@ -1,7 +1,7 @@
 import pool from "../utils/database.js";
 
 export const getHostProfileUserId = async (userId) => {
-  const [rows] = await pool.query(
+  const [rows] = await pool.execute(
     "SELECT * FROM host_profiles WHERE user_id = ?",
     [userId],
   );

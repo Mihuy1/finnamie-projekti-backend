@@ -1,7 +1,7 @@
 import pool from "../utils/database.js";
 
 export const getHostActivitiesByUserId = async (userId) => {
-  const [rows] = await pool.query(
+  const [rows] = await pool.execute(
     `
     SELECT a.id, a.name
     FROM host_profiles hp

@@ -51,7 +51,11 @@ export const uploadImage = async (req, res, next) => {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
     const filename = path.basename(req.file.path);
     const url = `/uploads/users/${filename}`;
-    await updateUserImage(url, req.user.id);
+    const t = await updateUserImage(url, req.user.id);
+
+    console.log("uploaded image to url:", url);
+
+    console.log("timeslot image:", t);
     res.status(201).json({
       filename,
       url,
@@ -121,6 +125,9 @@ export const deleteTimeslotImageByUrl = async (req, res, next) => {
       });
       return;
     }
+
+    console.log("url;", image_url);
+    console.log("timeslot_id:", timeslot_id);
 
     const deletedCount = await deleteImageByTimeslotIdAndURL(
       timeslot_id,

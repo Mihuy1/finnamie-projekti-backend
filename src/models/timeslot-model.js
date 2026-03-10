@@ -41,19 +41,39 @@ const timeslotHistory = async (id) => {
   return rows;
 };
 
-const attachAvctivities = async (timeslots) => {
-  for (const t of timeslots) {
-    t.activities = await getActivitiesByTimeslotId(t.id);
-  }
+const attachActivitiesAndImages = async (timeslots) => {
+  if (timeslots.length === 0) return [];
+  const ids = timeslots.map((t) => t.id);
 
-  return timeslots;
+  const [allActivities] = await pool.query(
+    `SELECT ta.timeslot_id, a.id, a.name 
+     FROM timeslot_activities ta 
+     JOIN activities a ON a.id = ta.activity_id 
+     WHERE ta.timeslot_id IN (?)`,
+    [ids],
+  );
+
+  const [allImages] = await pool.query(
+    "SELECT timeslot_id, url FROM timeslot_images WHERE timeslot_id IN (?)",
+    [ids],
+  );
+
+  return timeslots.map((t) => ({
+    ...t,
+    activities: allActivities
+      .filter((a) => a.timeslot_id === t.id)
+      .map((a) => ({ id: a.id, name: a.name })),
+    images: allImages
+      .filter((img) => img.timeslot_id === t.id)
+      .map((img) => ({ url: img.url })),
+  }));
 };
 
 const getOwnedTimeslots = async (id) => {
   const [rows] = await pool.query("SELECT * FROM timeslot WHERE host_id = ?", [
     id,
   ]);
-  return attachAvctivities(rows);
+  return attachActivitiesAndImages(rows);
 };
 
 const getAvailableTimeslots = async () => {
@@ -154,28 +174,46 @@ const deleteTimeslot = async (id, host_id) => {
 };
 
 const getTimeslotsWithHost = async () => {
+  // 1. Fetch available timeslots with host info
   const [timeslots] = await pool.query(
     `SELECT t.*, u.first_name, u.last_name 
      FROM timeslot t 
      JOIN users u ON t.host_id = u.id 
-     WHERE u.role = 'host' AND t.res_status = 'available'`,
+     WHERE u.role = 'host' AND t.res_status = 'available'
+     ORDER BY t.start_time DESC`,
   );
 
-  // Get activities for each timeslot
-  for (let timeslot of timeslots) {
-    const [activities] = await pool.query(
-      `SELECT a.id, a.name 
-       FROM timeslot_activities ta 
-       JOIN activities a ON a.id = ta.activity_id 
-       WHERE ta.timeslot_id = ?`,
-      [timeslot.id],
-    );
-    const images = await getTimeslotImageURLs(timeslot.id);
-    timeslot.images = images;
-    timeslot.activities = activities;
-  }
+  if (timeslots.length === 0) return [];
 
-  return timeslots;
+  const timeslotIds = timeslots.map((t) => t.id);
+
+  // 2. Fetch ALL activities for these timeslots in one query
+  const [allActivities] = await pool.query(
+    `SELECT ta.timeslot_id, a.id, a.name 
+     FROM timeslot_activities ta 
+     JOIN activities a ON a.id = ta.activity_id 
+     WHERE ta.timeslot_id IN (?)`,
+    [timeslotIds],
+  );
+
+  // 3. Fetch ALL images for these timeslots in one query
+  const [allImages] = await pool.query(
+    "SELECT timeslot_id, url FROM timeslot_images WHERE timeslot_id IN (?)",
+    [timeslotIds],
+  );
+
+  // 4. Map activities and images back to their timeslots
+  return timeslots.map((timeslot) => {
+    return {
+      ...timeslot,
+      activities: allActivities
+        .filter((a) => a.timeslot_id === timeslot.id)
+        .map((a) => ({ id: a.id, name: a.name })),
+      images: allImages
+        .filter((img) => img.timeslot_id === timeslot.id)
+        .map((img) => ({ url: img.url })),
+    };
+  });
 };
 
 export {
