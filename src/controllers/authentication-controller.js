@@ -55,8 +55,8 @@ const postLogin = async (req, res, next) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,
-      sameSite: "None",
+      secure: false,
+      sameSite: "Strict",
       maxAge: 7200000,
     });
 
