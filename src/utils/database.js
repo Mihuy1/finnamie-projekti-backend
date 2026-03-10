@@ -1,16 +1,20 @@
-import mariadb from "mariadb";
+import mysql from "mysql2/promise";
 import "dotenv/config";
 
-const pool = mariadb.createPool({
+const pool = mysql.createPool({
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+  port: process.env.DB_PORT || 4000,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  database: process.env.DB_DATABASE,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 5,
   queueLimit: 0,
   dateStrings: true,
+  ssl: {
+    minVersion: "TLSv1.2",
+    rejectUnauthorized: true,
+  },
 });
 
 export default pool;
