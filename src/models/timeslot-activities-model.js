@@ -1,7 +1,7 @@
 import pool from "../utils/database.js";
 
 export const getActivitiesByTimeslotId = async (timeslotId) => {
-  return await pool.query(
+  const [rows] = await pool.query(
     `
     SELECT a.id, a.name
     FROM timeslot_activities ta
@@ -11,6 +11,8 @@ export const getActivitiesByTimeslotId = async (timeslotId) => {
     `,
     [timeslotId],
   );
+
+  return rows;
 };
 
 export const setActivitiesForTimeslot = async (timeslotId, activityIds) => {
@@ -31,8 +33,10 @@ export const setActivitiesForTimeslot = async (timeslotId, activityIds) => {
   const placeholders = ids.map(() => "(?, ?)").join(", ");
   const params = ids.flatMap((activityId) => [timeslotId, activityId]);
 
-  return pool.execute(
+  const [result] = await pool.execute(
     `INSERT INTO timeslot_activities (timeslot_id, activity_id) VALUES ${placeholders}`,
     params,
   );
+
+  return result;
 };

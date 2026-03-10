@@ -2,13 +2,13 @@ import pool from "../utils/database.js";
 import { v4 as uuidv4 } from "uuid";
 
 const listAllUsers = async () => {
-  const rows = await pool.query("SELECT * FROM users");
+  const [rows] = await pool.query("SELECT * FROM users");
   console.log("rows", rows);
   return rows;
 };
 
 const getUserByIdModel = async (id) => {
-  const rows = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+  const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
   console.log("rows", rows);
 
   return rows[0] ?? null;
@@ -17,13 +17,13 @@ const getUserByIdModel = async (id) => {
 const getUserPublicInfoByid = async (id) => {
   const rows =
     "SELECT users.first_name, users.last_name, users.role, users.country, users.date_of_birth, users.image_url, host_profiles.city, host_profiles.description, host_profiles.experience_length FROM users LEFT JOIN host_profiles ON users.id = host_profiles.user_id WHERE users.id = ?";
-  const result = await pool.query(rows, [id]);
+  const [result] = await pool.query(rows, [id]);
 
   return result[0] ?? null;
 };
 
 const getUserProfileInfoById = async (id) => {
-  const rows = await pool.query(
+  const [rows] = await pool.query(
     "SELECT first_name, last_name, email, role, country, date_of_birth, image_url FROM users WHERE id = ?",
     [id],
   );
@@ -32,7 +32,7 @@ const getUserProfileInfoById = async (id) => {
 };
 
 const getUserImageById = async (id) => {
-  const rows = await pool.query("SELECT image_url FROM users WHERE id = ?", [
+  const [rows] = await pool.query("SELECT image_url FROM users WHERE id = ?", [
     id,
   ]);
   return rows[0] ?? null;
@@ -67,7 +67,7 @@ const addUser = async (user) => {
     image_url,
   ].map((value) => value ?? null);
 
-  const rows = await pool.execute(sql, params);
+  await pool.execute(sql, params);
 
   return {
     id,
@@ -132,7 +132,7 @@ const modifyUser = async (id, user) => {
 
   const sql = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
 
-  const result = await pool.execute(sql, params);
+  const [result] = await pool.execute(sql, params);
 
   return {
     affectedRows: result.affectedRows.toString(),
@@ -140,7 +140,9 @@ const modifyUser = async (id, user) => {
 };
 
 const getUserByEmail = async (email) => {
-  const rows = await pool.query(`SELECT * FROM users WHERE email = ?`, [email]);
+  const [rows] = await pool.query(`SELECT * FROM users WHERE email = ?`, [
+    email,
+  ]);
   return rows[0] ?? null;
 };
 

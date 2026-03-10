@@ -1,7 +1,7 @@
 import pool from "../utils/database.js";
 
 export const getHostProfileUserId = async (userId) => {
-  const rows = await pool.query(
+  const [rows] = await pool.query(
     "SELECT * FROM host_profiles WHERE user_id = ?",
     [userId],
   );
@@ -38,7 +38,8 @@ export const addHostProfileByUserId = async (userId, profile) => {
     experience_length,
   ].map((v) => v ?? null);
 
-  return pool.execute(sql, params);
+  const [result] = await pool.execute(sql, params);
+  return result;
 };
 
 export const modifyHostProfileByUserId = async (userId, profile) => {
@@ -66,5 +67,6 @@ export const modifyHostProfileByUserId = async (userId, profile) => {
   params.push(userId);
 
   const sql = `UPDATE host_profiles SET ${fields.join(", ")} WHERE user_id = ?`;
-  return pool.execute(sql, params);
+  const [result] = await pool.execute(sql, params);
+  return result;
 };

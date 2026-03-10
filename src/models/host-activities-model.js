@@ -1,7 +1,7 @@
 import pool from "../utils/database.js";
 
 export const getHostActivitiesByUserId = async (userId) => {
-  const rows = await pool.query(
+  const [rows] = await pool.query(
     `
     SELECT a.id, a.name
     FROM host_profiles hp
@@ -38,7 +38,7 @@ export const setHostActivitiesByUserId = async (userId, activityIds) => {
     throw new Error("Invalid activity_ids payload");
   }
 
-  const hostProfiles = await pool.query(
+  const [hostProfiles] = await pool.query(
     "SELECT id FROM host_profiles WHERE user_id = ?",
     [userId],
   );
@@ -56,8 +56,10 @@ export const setHostActivitiesByUserId = async (userId, activityIds) => {
   const placeholders = ids.map(() => "(?, ?)").join(", ");
   const params = ids.flatMap((activityId) => [hostProfileId, activityId]);
 
-  return pool.execute(
+  const [result] = await pool.execute(
     `INSERT INTO host_profile_activities (host_profile_id, activity_id) VALUES ${placeholders}`,
     params,
   );
+
+  return result;
 };

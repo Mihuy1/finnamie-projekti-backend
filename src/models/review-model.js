@@ -1,14 +1,14 @@
 import pool from "../utils/database.js";
 
 const listAllReviews = async () => {
-  const rows = await pool.query("SELECT * FROM review");
+  const [rows] = await pool.query("SELECT * FROM review");
 
   console.log("rows:", rows);
   return rows;
 };
 
 const getReviewByHostId = async (hostId) => {
-  const rows = await pool.query("SELECT * FROM review WHERE host_id = ?", [
+  const [rows] = await pool.query("SELECT * FROM review WHERE host_id = ?", [
     hostId,
   ]);
 
@@ -16,7 +16,7 @@ const getReviewByHostId = async (hostId) => {
 };
 
 const getReviewByGuestId = async (guestId) => {
-  const rows = await pool.query("SELECT * FROM review WHERE guest_id = ?", [
+  const [rows] = await pool.query("SELECT * FROM review WHERE guest_id = ?", [
     guestId,
   ]);
 
