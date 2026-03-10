@@ -39,19 +39,41 @@ const timeslotHistory = async (id) => {
   );
 };
 
-const attachAvctivities = async (timeslots) => {
-  for (const t of timeslots) {
-    t.activities = await getActivitiesByTimeslotId(t.id);
+const attachActivitiesAndImages = async (timeslots) => {
+  if (!Array.isArray(timeslots) || timeslots.length === 0) {
+    return [];
   }
 
-  return timeslots;
+  const ids = timeslots.map((t) => t.id);
+  const allActivities = await pool.query(
+    `SELECT ta.timeslot_id, a.id, a.name
+    FROM timeslot_activities ta
+    JOIN activities a ON a.id = ta.activity_id
+    WHERE ta.timeslot_id IN (?)`,
+    [ids],
+  );
+
+  const allImages = await pool.query(
+    `SELECT timeslot_id, url FROM timeslot_images WHERE timeslot_id IN (?)`,
+    [ids],
+  );
+
+  return timeslots.map((t) => ({
+    ...t,
+    activities: allActivities
+      .filter((a) => a.timeslot_id === t.id)
+      .map((a) => ({ id: a.id, name: a.name })),
+    images: allImages
+      .filter((img) => img.timeslot_id === t.id)
+      .map((img) => ({ url: img.url })),
+  }));
 };
 
 const getOwnedTimeslots = async (id) => {
   const rows = await pool.query("SELECT * FROM timeslot WHERE host_id = ?", [
     id,
   ]);
-  return attachAvctivities(rows);
+  return attachActivitiesAndImages(rows);
 };
 
 const getAvailableTimeslots = async () => {
@@ -149,7 +171,7 @@ const getTimeslotsWithHost = async () => {
     `SELECT t.*, u.first_name, u.last_name 
      FROM timeslot t 
      JOIN users u ON t.host_id = u.id 
-     WHERE u.role = 'host' AND t.res_status = 'available'`,
+     WHERE u.role = 'host' AND t.res_status = 'available' ORDER BY start_time DESC`,
   );
 
   // Get activities for each timeslot
