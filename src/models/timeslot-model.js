@@ -16,9 +16,9 @@ const timeslotById = async (id) => {
 
   // Get associated activities
   const activities = await pool.query(
-    `SELECT a.id, a.name 
-     FROM timeslot_activities ta 
-     JOIN activities a ON a.id = ta.activity_id 
+    `SELECT a.id, a.name
+     FROM timeslot_activities ta
+     JOIN activities a ON a.id = ta.activity_id
      WHERE ta.timeslot_id = ?`,
     [id],
   );
@@ -84,8 +84,8 @@ const getAvailableTimeslots = async () => {
 
 const addTimeSlot = async (timeslot) => {
   const q = `INSERT INTO timeslot(id, host_id, type, start_time, end_time, description,
-                          city, latitude_deg, longitude_deg, address)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                          city, latitude_deg, longitude_deg, address, res_status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   const {
     id,
     host_id,
@@ -97,6 +97,7 @@ const addTimeSlot = async (timeslot) => {
     latitude_deg,
     longitude_deg,
     address,
+    res_status,
   } = timeslot;
 
   const params = [
@@ -110,6 +111,7 @@ const addTimeSlot = async (timeslot) => {
     latitude_deg,
     longitude_deg,
     address,
+    res_status,
   ];
 
   await pool.execute(q, params);
@@ -131,6 +133,7 @@ const updateTimeslot = async (id, data) => {
     "latitude_deg",
     "longitude_deg",
     "address",
+    "res_status",
   ];
 
   const setClauses = [];
@@ -168,18 +171,18 @@ const deleteTimeslot = async (id, host_id) => {
 
 const getTimeslotsWithHost = async () => {
   const timeslots = await pool.query(
-    `SELECT t.*, u.first_name, u.last_name 
-     FROM timeslot t 
-     JOIN users u ON t.host_id = u.id 
+    `SELECT t.*, u.first_name, u.last_name
+     FROM timeslot t
+     JOIN users u ON t.host_id = u.id
      WHERE u.role = 'host' AND t.res_status = 'available' ORDER BY start_time DESC`,
   );
 
   // Get activities for each timeslot
   for (let timeslot of timeslots) {
     const activities = await pool.query(
-      `SELECT a.id, a.name 
-       FROM timeslot_activities ta 
-       JOIN activities a ON a.id = ta.activity_id 
+      `SELECT a.id, a.name
+       FROM timeslot_activities ta
+       JOIN activities a ON a.id = ta.activity_id
        WHERE ta.timeslot_id = ?`,
       [timeslot.id],
     );
