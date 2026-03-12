@@ -161,6 +161,10 @@ const updateTimeslot = async (id, data) => {
 };
 
 const deleteTimeslot = async (id, host_id) => {
+  const q = "DELETE FROM timeslot_images WHERE timeslot_id = ?";
+
+  const rows = await pool.execute(q, [id]);
+
   const { affectedRows } = await pool.execute(
     "DELETE FROM timeslot WHERE id = ? AND host_id = ?",
     [id, host_id],
