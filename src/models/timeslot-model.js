@@ -70,9 +70,10 @@ const attachActivitiesAndImages = async (timeslots) => {
 };
 
 const getOwnedTimeslots = async (id) => {
-  const rows = await pool.query("SELECT * FROM timeslot WHERE host_id = ?", [
-    id,
-  ]);
+  const rows = await pool.query(
+    "SELECT * FROM timeslot WHERE host_id = ? ORDER BY start_time ASC",
+    [id],
+  );
   return attachActivitiesAndImages(rows);
 };
 
