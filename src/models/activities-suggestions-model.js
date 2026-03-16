@@ -24,10 +24,10 @@ export const createActivitySuggestion = async (name, id) => {
 };
 
 export const deleteActivitySuggestionById = async (id) => {
-  const rows = await pool.query(
+  const result = await pool.query(
     "DELETE FROM activities_suggestions WHERE id = ?",
     [id],
   );
 
-  return rows.affectedRows;
+  return result.affectedRows;
 };

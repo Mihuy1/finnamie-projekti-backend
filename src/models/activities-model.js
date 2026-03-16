@@ -5,3 +5,19 @@ export const listAllActivities = async () => {
 
   return rows;
 };
+
+export const createActivity = async (name) => {
+  const q = "INSERT INTO activities (name) VALUES (?)";
+
+  const rows = await pool.query(q, [name]);
+
+  return rows.affectedRows;
+};
+
+export const deleteActivity = async (id) => {
+  const q = "DELETE FROM activities WHERE id = ?";
+
+  const result = await pool.query(q, [id]);
+
+  return result.affectedRows;
+};

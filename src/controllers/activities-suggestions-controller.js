@@ -49,3 +49,11 @@ export const removeActivitiesSuggestionById = async (req, res, next) => {
     next(error);
   }
 };
+
+// export const acceptActivitySuggestion = async (req, res, next) => {
+//   const { name } = req.body;
+
+//   try {
+//     const rows = await
+//   }
+// };
