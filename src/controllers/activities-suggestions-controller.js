@@ -38,6 +38,7 @@ export const createNewActivitySuggestion = async (req, res, next) => {
 
 export const removeActivitiesSuggestionById = async (req, res, next) => {
   const { id } = req.params;
+  const user = req.user;
 
   try {
     const affectedRows = await deleteActivitySuggestionById(id);

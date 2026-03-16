@@ -144,6 +144,12 @@ const getUserByEmail = async (email) => {
   return rows[0] ?? null;
 };
 
+const removeUser = async (id) => {
+  const rows = await pool.execute(`DELETE FROM users WHERE id = ?`, [id]);
+
+  return rows[0] ?? null;
+};
+
 export {
   listAllUsers,
   getUserByIdModel,
@@ -153,4 +159,5 @@ export {
   modifyUser,
   getUserImageById,
   getUserProfileInfoById,
+  removeUser,
 };

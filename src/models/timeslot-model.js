@@ -1,5 +1,4 @@
 import pool from "../utils/database.js";
-import { getActivitiesByTimeslotId } from "./timeslot-activities-model.js";
 import { getTimeslotImageURLs } from "./upload-model.js";
 
 const listAllTimeslot = async () => {
@@ -164,7 +163,7 @@ const updateTimeslot = async (id, data) => {
 const deleteTimeslot = async (id, host_id) => {
   const q = "DELETE FROM timeslot_images WHERE timeslot_id = ?";
 
-  const rows = await pool.execute(q, [id]);
+  await pool.execute(q, [id]);
 
   const { affectedRows } = await pool.execute(
     "DELETE FROM timeslot WHERE id = ? AND host_id = ?",
@@ -172,6 +171,25 @@ const deleteTimeslot = async (id, host_id) => {
   );
   if (affectedRows == 0)
     throw new Error("Timeslot owner and requester do not match.");
+};
+
+const deleteAllTimeslotsByHostId = async (host_id) => {
+  await pool.execute(
+    `
+    DELETE ti
+    FROM timeslot_images ti
+    JOIN timeslot t ON t.id = ti.timeslot_id
+    WHERE t.host_id = ?`,
+    [host_id],
+  );
+
+  const q = "DELETE FROM timeslot WHERE host_id = ?";
+
+  const rows = await pool.query(q, [host_id]);
+
+  console.log("delete all timeslots by host id:", rows);
+
+  return rows[0] > 0;
 };
 
 const getTimeslotsWithHost = async () => {
@@ -209,4 +227,5 @@ export {
   getOwnedTimeslots,
   getAvailableTimeslots,
   getTimeslotsWithHost,
+  deleteAllTimeslotsByHostId,
 };

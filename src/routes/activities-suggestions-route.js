@@ -17,5 +17,5 @@ activitiesSuggestionsRoute
 
 activitiesSuggestionsRoute
   .route("/:id")
-  .delete(allowRoles("admin"), removeActivitiesSuggestionById);
+  .delete(allowRoles("admin", "host"), removeActivitiesSuggestionById);
 export default activitiesSuggestionsRoute;
