@@ -6,18 +6,18 @@ export const listAllActivities = async () => {
   return rows;
 };
 
-export const getActivityByName = async (conn = pool, name) => {
-  const rows = await conn.query("SELECT * FROM activities WHERE name = ?", [
+export const getActivityByName = async (name) => {
+  const rows = await pool.query("SELECT * FROM activities WHERE name = ?", [
     name,
   ]);
 
   return rows;
 };
 
-export const createActivity = async (conn = pool, name) => {
+export const createActivity = async (name) => {
   const q = "INSERT INTO activities (name) VALUES (?)";
 
-  const rows = await conn.query(q, [name]);
+  const rows = await pool.query(q, [name]);
 
   return rows.affectedRows;
 };

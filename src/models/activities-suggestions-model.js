@@ -14,8 +14,8 @@ export const getActivitySuggestionByHostId = async (id) => {
   return rows;
 };
 
-export const getActivitySuggestionById = async (conn = pool, id) => {
-  const rows = await conn.query(
+export const getActivitySuggestionById = async (id) => {
+  const rows = await pool.query(
     "SELECT * FROM activities_suggestions WHERE id = ?",
     [id],
   );
@@ -32,8 +32,8 @@ export const createActivitySuggestion = async (name, id) => {
   return rows.affectedRows;
 };
 
-export const deleteActivitySuggestionById = async (conn = pool, id) => {
-  const result = await conn.query(
+export const deleteActivitySuggestionById = async (id) => {
+  const result = await pool.query(
     "DELETE FROM activities_suggestions WHERE id = ?",
     [id],
   );
