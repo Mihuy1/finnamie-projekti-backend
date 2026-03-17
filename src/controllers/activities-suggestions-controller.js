@@ -1,6 +1,12 @@
 import {
+  createActivity,
+  getActivityByName,
+} from "../models/activities-model.js";
+import {
   createActivitySuggestion,
   deleteActivitySuggestionById,
+  getActivitySuggestionById,
+  handleAcceptActivitySuggestion,
   listAllActivitiesSuggestions,
 } from "../models/activities-suggestions-model.js";
 import { getHostProfileUserId } from "../models/host-profile-model.js";
@@ -8,6 +14,21 @@ import { getHostProfileUserId } from "../models/host-profile-model.js";
 export const getAllActivitiesSuggestions = async (req, res, next) => {
   try {
     res.json(await listAllActivitiesSuggestions());
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getActivitySuggestionsById = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    const activitySuggestion = await getActivitySuggestionById(id);
+
+    if (!activitySuggestion || activitySuggestion.length === 0)
+      return res.status(404).json({ message: "Activity Suggestion not found" });
+
+    res.status(200).json(activitySuggestion);
   } catch (error) {
     next(error);
   }
@@ -50,10 +71,22 @@ export const removeActivitiesSuggestionById = async (req, res, next) => {
   }
 };
 
-// export const acceptActivitySuggestion = async (req, res, next) => {
-//   const { name } = req.body;
+export const acceptActivitySuggestion = async (req, res, next) => {
+  const { id } = req.params;
 
-//   try {
-//     const rows = await
-//   }
-// };
+  try {
+    await handleAcceptActivitySuggestion(id);
+
+    res.status(201).json({ message: "Activity accepted" });
+  } catch (error) {
+    if (error.message === "NOT_FOUND") {
+      return res.status(404).json({ message: "Activity suggestion not found" });
+    }
+
+    if (error.message === "ALREADY_EXISTS") {
+      return res.status(409).json({ message: "Activity already exists" });
+    }
+
+    next(error);
+  }
+};
