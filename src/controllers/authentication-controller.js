@@ -146,7 +146,7 @@ const register = async (req, res, next) => {
       .json({ message: "Registration successful!", userId: result.id });
   } catch (error) {
     res.status(400).json({ message: "something went wrong:", error });
-    console.log("Error:", error);
+    console.error("Error:", error);
     next(error);
   }
 };
@@ -232,11 +232,8 @@ const getProfileInfo = async (req, res, next) => {
     let finalUser = user;
 
     if (user.role === "host") {
-      console.log(req.user);
-
       const hostUser = await getHostProfileUserId(req.user.id);
       const hostActivites = await getHostActivitiesByUserId(req.user.id);
-      console.log(hostUser);
       if (!hostUser)
         return res.status(404).json({ message: "Host profile not found" });
 

@@ -11,8 +11,6 @@ export const getActivitySuggestionByHostId = async (id) => {
     [id],
   );
 
-  console.log("hal");
-
   return rows;
 };
 

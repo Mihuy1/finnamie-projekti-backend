@@ -19,7 +19,6 @@ export const getAllActivitiesSuggestions = async (req, res, next) => {
 export const getActivitySuggestionsByHostId = async (req, res, next) => {
   const id = req.user.id;
 
-  console.log("id:", id);
   try {
     res.json(await getActivitySuggestionByHostId(id));
   } catch (error) {

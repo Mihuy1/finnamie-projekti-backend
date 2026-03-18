@@ -70,7 +70,6 @@ const postUser = async (req, res, next) => {
 
     const createdUser = await addUser(newUser);
 
-    console.log(createdUser);
     res.status(201).json(createdUser);
   } catch (error) {
     if (error.errno === 1062 || error.code === "ER_DUP_ENTRY") {
