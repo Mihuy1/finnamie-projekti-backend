@@ -1,10 +1,7 @@
 import {
-  createActivity,
-  getActivityByName,
-} from "../models/activities-model.js";
-import {
   createActivitySuggestion,
   deleteActivitySuggestionById,
+  getActivitySuggestionByHostId,
   getActivitySuggestionById,
   handleAcceptActivitySuggestion,
   listAllActivitiesSuggestions,
@@ -14,6 +11,17 @@ import { getHostProfileUserId } from "../models/host-profile-model.js";
 export const getAllActivitiesSuggestions = async (req, res, next) => {
   try {
     res.json(await listAllActivitiesSuggestions());
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getActivitySuggestionsByHostId = async (req, res, next) => {
+  const id = req.user.id;
+
+  console.log("id:", id);
+  try {
+    res.json(await getActivitySuggestionByHostId(id));
   } catch (error) {
     next(error);
   }
@@ -59,7 +67,6 @@ export const createNewActivitySuggestion = async (req, res, next) => {
 
 export const removeActivitiesSuggestionById = async (req, res, next) => {
   const { id } = req.params;
-  const user = req.user;
 
   try {
     const affectedRows = await deleteActivitySuggestionById(id);

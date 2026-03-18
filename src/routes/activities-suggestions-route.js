@@ -3,6 +3,7 @@ import { allowRoles, authorize } from "../middlewares.js";
 import {
   acceptActivitySuggestion,
   createNewActivitySuggestion,
+  getActivitySuggestionsByHostId,
   getActivitySuggestionsById,
   getAllActivitiesSuggestions,
   removeActivitiesSuggestionById,
@@ -20,6 +21,10 @@ activitiesSuggestionsRoute
 activitiesSuggestionsRoute
   .route("/accept/:id")
   .post(allowRoles("admin"), acceptActivitySuggestion);
+
+activitiesSuggestionsRoute
+  .route("/host")
+  .get(allowRoles("host"), getActivitySuggestionsByHostId);
 
 activitiesSuggestionsRoute
   .route("/:id")
