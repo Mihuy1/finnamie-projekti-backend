@@ -35,6 +35,7 @@ export const confirmTimeslot = async (req, res, next) => {
 export const getReservationInformation = async (req, res, next) => {
   try {
     const data = await getReservationInformationModel(req.user.id);
+    console.log(data);
     res.status(200).json(data);
   } catch (err) {
     next(err);
