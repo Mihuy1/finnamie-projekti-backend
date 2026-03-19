@@ -41,7 +41,7 @@ export const deleteActivitySuggestionById = async (id) => {
   return result.affectedRows;
 };
 
-export const handleAcceptActivitySuggestion = async (id) => {
+export const handleAcceptActivitySuggestion = async (id, name) => {
   const conn = await pool.getConnection();
 
   try {
@@ -53,8 +53,6 @@ export const handleAcceptActivitySuggestion = async (id) => {
     );
 
     if (!suggestion || suggestion.length === 0) throw new Error("NOT_FOUND");
-
-    const name = suggestion[0].name;
 
     const activity = await conn.query(
       "SELECT id FROM activities WHERE name = ?",

@@ -79,9 +79,10 @@ export const removeActivitiesSuggestionById = async (req, res, next) => {
 
 export const acceptActivitySuggestion = async (req, res, next) => {
   const { id } = req.params;
+  const { name } = req.body;
 
   try {
-    await handleAcceptActivitySuggestion(id);
+    await handleAcceptActivitySuggestion(id, name);
 
     res.status(201).json({ message: "Activity accepted" });
   } catch (error) {
