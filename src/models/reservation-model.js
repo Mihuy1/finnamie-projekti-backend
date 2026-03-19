@@ -50,14 +50,19 @@ export const confirmReservationModel = async (timeslotID, hostID) => {
 };
 
 export const getReservationInformationModel = async (guestID) => {
-  // pitää tehdä näin, koska molemmissa taulukoissa id sarake
+  // pitää tehdä näin, koska useassa taulukoissa id sarake
+
   const q = `SELECT r.id AS reservation_id, r.guest_id, r.booking_status, r.res_date,
-             t.id AS timeslot_id, t.host_id, t.type, t.created_at, t.start_time, 
-             t.end_time, t.res_status, t.description, t.city, t.address 
+             t.id AS timeslot_id, t.host_id, t.type, t.created_at, t.start_time, t.end_time, 
+             t.res_status, t.description, t.city, t.address, 
+             rev.content AS content, rev.score AS score, rev.id AS review_id
              FROM reservations r
              INNER JOIN timeslot t
              ON r.timeslot_id = t.id
-             WHERE r.guest_id = ?`;
+             LEFT JOIN review rev
+             ON rev.res_id = r.id
+             WHERE r.guest_id = ?
+             ORDER BY r.res_date DESC`;
   const rows = await pool.execute(q, [guestID]);
   return rows;
 };
