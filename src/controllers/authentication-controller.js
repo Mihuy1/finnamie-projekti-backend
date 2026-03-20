@@ -84,6 +84,7 @@ const register = async (req, res, next) => {
       role,
       country,
       date_of_birth,
+      gender,
       // Host specific fields (extracted from req.body)
       phone_number,
       street_address,
@@ -91,7 +92,6 @@ const register = async (req, res, next) => {
       city,
       description,
       experience_length,
-
       activity_ids,
     } = req.body;
 
@@ -121,7 +121,10 @@ const register = async (req, res, next) => {
       role: role,
       country,
       date_of_birth,
+      gender,
     };
+
+    console.log("registeredUser:", registeredUser);
 
     const result = await addUser(registeredUser);
 
@@ -163,6 +166,7 @@ const updateProfile = async (req, res, next) => {
       confirmPassword,
       country,
       date_of_birth,
+      gender,
       // Host specific fields (extracted from req.body)
       phone_number,
       street_address,
@@ -198,6 +202,7 @@ const updateProfile = async (req, res, next) => {
       password: hashedPassword,
       country,
       date_of_birth,
+      gender,
     };
 
     await modifyUser(id, updatedUser);

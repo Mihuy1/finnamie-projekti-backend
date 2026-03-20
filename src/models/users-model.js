@@ -22,7 +22,7 @@ const getUserPublicInfoByid = async (id) => {
 
 const getUserProfileInfoById = async (id) => {
   const rows = await pool.query(
-    "SELECT first_name, last_name, email, role, country, date_of_birth, image_url FROM users WHERE id = ?",
+    "SELECT first_name, last_name, email, role, country, date_of_birth, gender, image_url FROM users WHERE id = ?",
     [id],
   );
 
@@ -46,13 +46,14 @@ const addUser = async (user) => {
     role,
     country,
     date_of_birth,
+    gender,
     image_url,
   } = user;
 
   if (!id) id = uuidv4();
 
-  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, country, date_of_birth, image_url) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, country, date_of_birth, gender, image_url) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   const params = [
     id,
     first_name,
@@ -62,6 +63,7 @@ const addUser = async (user) => {
     role,
     country,
     date_of_birth,
+    gender,
     image_url,
   ].map((value) => value ?? null);
 
@@ -74,6 +76,7 @@ const addUser = async (user) => {
     email,
     role,
     date_of_birth,
+    gender,
     country,
   };
 };
@@ -87,6 +90,7 @@ const modifyUser = async (id, user) => {
     role,
     country,
     date_of_birth,
+    gender,
   } = user;
 
   const fields = [];
@@ -122,6 +126,11 @@ const modifyUser = async (id, user) => {
   if (date_of_birth !== undefined) {
     fields.push("date_of_birth = ?");
     params.push(date_of_birth);
+  }
+
+  if (gender !== undefined) {
+    fields.push("gender = ?");
+    params.push(gender);
   }
 
   if (fields.length === 0) return { affectedRows: 0 };
