@@ -16,6 +16,24 @@ export const uploadTimeSlotImages = async (urls) => {
   await pool.query(q, flatValues);
 };
 
+export const uploadTimeSlotImagesExperience = async (conn = pool, urls) => {
+  if (!urls.length) {
+    console.log("returned");
+    return;
+  }
+
+  const placeholders = urls.map(() => "(?, ?)").join(", ");
+  const flatValues = urls.flat();
+
+  const q = `INSERT IGNORE INTO timeslot_images(url, experience_id) VALUES ${placeholders}`;
+
+  const result = await conn.query(q, flatValues);
+
+  console.log("uploadTimeSlotImagesExperience result:", result);
+
+  return result;
+};
+
 export const deleteTimeslotImages = async (id) => {
   const q = "DELETE FROM timeslot_images WHERE timeslot_id = ?";
   const { affectedRows } = await pool.execute(q, [id]);

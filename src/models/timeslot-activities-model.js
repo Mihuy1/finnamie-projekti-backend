@@ -36,3 +36,26 @@ export const setActivitiesForTimeslot = async (timeslotId, activityIds) => {
     params,
   );
 };
+
+export const insertTimeslotActivitiesExperience = async (
+  conn = pool,
+  experienceId,
+  activityIds,
+) => {
+  const ids = Array.isArray(activityIds)
+    ? activityIds
+        .map((x) => Number(x))
+        .filter((n) => Number.isInteger(n) && n > 0)
+    : [];
+
+  if (ids.length === 0) return { affectedRows: 0 };
+
+  // Insert new activities
+  const placeholders = ids.map(() => "(?, ?)").join(", ");
+  const params = ids.flatMap((activityId) => [experienceId, activityId]);
+
+  return conn.execute(
+    `INSERT INTO timeslot_activities (experience_id, activity_id) VALUES ${placeholders}`,
+    params,
+  );
+};
