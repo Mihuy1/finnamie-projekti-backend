@@ -1,6 +1,7 @@
 import {
   getAllExperiences,
   getAllExperiencesWithHost,
+  getExperienceById,
   getExperiencesByHostId,
   insertExperience,
   removeExperience,
@@ -61,6 +62,12 @@ export const createExperience = async (req, res, next) => {
     activity_ids,
   } = req.body;
 
+  const imageFiles = req.files?.images || [];
+  const parsedActivityIds = activity_ids ? JSON.parse(activity_ids) : [];
+
+  console.log("req.body:", req.body);
+  console.log("req.files.images:", imageFiles);
+
   const conn = await pool.getConnection();
 
   try {
@@ -83,12 +90,15 @@ export const createExperience = async (req, res, next) => {
 
     const experience_id = result.insertId;
 
+    const urls = imageFiles.map((file) => [
+      `/uploads/timeslots/${file.filename}`,
+      Number(experience_id),
+    ]);
+
+    console.log("urls:", urls);
+
     // Upload images if provided
-    const uploadedImages = await uploadTimeSlotImagesExperience(
-      conn,
-      experience_id,
-      req.files?.images || [],
-    );
+    const uploadedImages = await uploadTimeSlotImagesExperience(conn, urls);
 
     if (
       uploadedImages &&
@@ -124,12 +134,12 @@ export const createExperience = async (req, res, next) => {
     const timeslotActivitiesResult = await insertTimeslotActivitiesExperience(
       conn,
       experience_id,
-      activity_ids || [],
+      JSON.parse(activity_ids) || [],
     );
 
     if (
       timeslotActivitiesResult.affectedRows === 0 &&
-      (activity_ids || []).length > 0
+      (JSON.parse(activity_ids) || []).length > 0
     ) {
       await conn.rollback();
       return res
@@ -163,9 +173,28 @@ export const createExperience = async (req, res, next) => {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
+    const [createdExperience] = await conn.query(
+      "SELECT * FROM experiences WHERE id = ?",
+      [experience_id],
+    );
+
+    const createdRule = await conn.query(
+      `SELECT e.id, tr.start_date, tr.end_date, tr.start_time, tr.end_time, tr.weekdays_bitmask, tr.max_participants
+       FROM timeslot_rules tr
+       JOIN experiences e ON e.id = tr.experience_id
+       WHERE tr.experience_id = ?`,
+      [experience_id],
+    );
+
     await conn.commit();
 
-    res.status(201).json({ message: "Experience created successfully" });
+    res.status(201).json({
+      message: "Experience created successfully",
+      experience: {
+        ...createdExperience,
+        rule: createdRule,
+      },
+    });
   } catch (error) {
     await conn.rollback();
     next(error);

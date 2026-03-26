@@ -5,6 +5,26 @@ export const getAllExperiences = async () => {
   return rows;
 };
 
+export const getExperienceById = async (experience_id) => {
+  const rows = await pool.query("SELECT * FROM experiences WHERE id = ?", [
+    experience_id,
+  ]);
+
+  for (let exp of rows) {
+    const rule = await pool.query(
+      `SELECT e.id, tr.start_date, tr.end_date, tr.start_time, tr.end_time, tr.weekdays_bitmask, tr.max_participants
+      FROM timeslot_rules tr
+      JOIN experiences e ON e.id = tr.experience_id
+      WHERE tr.experience_id = ?`,
+      exp.id,
+    );
+
+    exp.rule = rule;
+  }
+
+  return rows;
+};
+
 export const getExperiencesByHostId = async (host_id) => {
   const rows = await pool.query("SELECT * FROM experiences WHERE host_id = ?", [
     host_id,
@@ -105,6 +125,8 @@ export const insertExperience = async (
 
   return result;
 };
+
+export const putExperience = async () => {};
 
 export const removeExperience = async (host_id, experience_id) => {
   const rows = await pool.execute(
