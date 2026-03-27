@@ -5,6 +5,7 @@ import {
   fetchAllExperiences,
   fetchAllExperiencesWithHost,
   getExperiencesByHost,
+  updateExperience,
 } from "../controllers/experiences-controller.js";
 import { allowRoles, authorize } from "../middlewares.js";
 import { upload } from "../utils/multer.js";
@@ -28,5 +29,7 @@ experiencesRouter
 experiencesRouter
   .route("/host/:id")
   .delete(allowRoles("host"), deleteExperienceById);
+
+experiencesRouter.route("/:id").put(allowRoles("host"), updateExperience);
 
 export default experiencesRouter;

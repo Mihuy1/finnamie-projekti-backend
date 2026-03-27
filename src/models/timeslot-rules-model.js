@@ -18,6 +18,18 @@ export const getTimeslotRuleByExperienceId = async (experience_id) => {
   return rows;
 };
 
+export const getRuleByExperienceId = async (experience_id, conn = pool) => {
+  const rows = await conn.query(
+    `SELECT tr.start_date, tr.end_date, tr.start_time, tr.end_time,
+            tr.weekdays_bitmask, tr.max_participants
+     FROM timeslot_rules tr
+     WHERE tr.experience_id = ?`,
+    [experience_id],
+  );
+
+  return rows[0] ?? null;
+};
+
 export const insertTimeslotRule = async (
   conn = pool,
   host_id,
@@ -43,7 +55,41 @@ export const insertTimeslotRule = async (
     ],
   );
 
-  console.log("createTimeslotRule rows:", result);
-
   return result;
+};
+
+export const putTimeslotRule = async (conn = pool, id, data) => {
+  const fields = { ...data };
+
+  const allowed = [
+    "title",
+    "description",
+    "type",
+    "city",
+    "address",
+    "latitude_deg",
+    "longitude_deg",
+  ];
+
+  const setClauses = [];
+  const params = [];
+
+  for (const [key, rawVal] of Object.entries(fields)) {
+    if (!allowed.includes(key)) continue;
+
+    let val = rawVal;
+
+    setClauses.push(`${key} = ?`);
+    params.push(val);
+  }
+
+  const q = `UPDATE timeslot_rules SET ${setClauses.join(", ")} WHERE id = ?`;
+
+  params.push(id);
+
+  await conn.execute(q, params);
+
+  const rows = await conn.execute(`SELECT * FROM rules WHERE id = ?`, [id]);
+
+  return rows[0] ?? null;
 };

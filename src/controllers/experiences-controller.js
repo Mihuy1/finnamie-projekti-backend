@@ -4,10 +4,14 @@ import {
   getExperienceById,
   getExperiencesByHostId,
   insertExperience,
+  putExperience,
   removeExperience,
 } from "../models/experiences-model.js";
 import { insertTimeslotActivitiesExperience } from "../models/timeslot-activities-model.js";
-import { insertTimeslotRule } from "../models/timeslot-rules-model.js";
+import {
+  insertTimeslotRule,
+  getRuleByExperienceId,
+} from "../models/timeslot-rules-model.js";
 import { uploadTimeSlotImagesExperience } from "../models/upload-model.js";
 import { v4 as uuidv4 } from "uuid";
 import pool from "../utils/database.js";
@@ -35,8 +39,6 @@ export const getExperiencesByHost = async (req, res, next) => {
 
   try {
     const experiences = await getExperiencesByHostId(host_id);
-    console.log("experiences:", experiences);
-
     res.json(experiences);
   } catch (error) {
     next(error);
@@ -65,9 +67,6 @@ export const createExperience = async (req, res, next) => {
   const imageFiles = req.files?.images || [];
   const parsedActivityIds = activity_ids ? JSON.parse(activity_ids) : [];
 
-  console.log("req.body:", req.body);
-  console.log("req.files.images:", imageFiles);
-
   const conn = await pool.getConnection();
 
   try {
@@ -94,8 +93,6 @@ export const createExperience = async (req, res, next) => {
       `/uploads/timeslots/${file.filename}`,
       Number(experience_id),
     ]);
-
-    console.log("urls:", urls);
 
     // Upload images if provided
     const uploadedImages = await uploadTimeSlotImagesExperience(conn, urls);
@@ -134,12 +131,12 @@ export const createExperience = async (req, res, next) => {
     const timeslotActivitiesResult = await insertTimeslotActivitiesExperience(
       conn,
       experience_id,
-      JSON.parse(activity_ids) || [],
+      parsedActivityIds || [],
     );
 
     if (
       timeslotActivitiesResult.affectedRows === 0 &&
-      (JSON.parse(activity_ids) || []).length > 0
+      (parsedActivityIds || []).length > 0
     ) {
       await conn.rollback();
       return res
@@ -178,13 +175,7 @@ export const createExperience = async (req, res, next) => {
       [experience_id],
     );
 
-    const createdRule = await conn.query(
-      `SELECT e.id, tr.start_date, tr.end_date, tr.start_time, tr.end_time, tr.weekdays_bitmask, tr.max_participants
-       FROM timeslot_rules tr
-       JOIN experiences e ON e.id = tr.experience_id
-       WHERE tr.experience_id = ?`,
-      [experience_id],
-    );
+    const createdRule = await getRuleByExperienceId(experience_id, conn);
 
     await conn.commit();
 
@@ -197,6 +188,52 @@ export const createExperience = async (req, res, next) => {
     });
   } catch (error) {
     await conn.rollback();
+    next(error);
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
+export const updateExperience = async (req, res, next) => {
+  const host_id = req.user.id;
+  const { activity_ids, ...experienceData } = req.body;
+  const { id } = req.params;
+
+  let conn;
+
+  try {
+    conn = await pool.getConnection();
+    await conn.beginTransaction();
+
+    const experienceRes = await putExperience(
+      conn,
+      id,
+      experienceData,
+      host_id,
+    );
+
+    if (experienceRes === null)
+      return res.status(404).json({ message: "Failed to update experience" });
+
+    if (activity_ids !== undefined) {
+      const parsedIds = Array.isArray(activity_ids)
+        ? activity_ids
+        : JSON.parse(activity_ids);
+      await insertTimeslotActivitiesExperience(conn, id, parsedIds);
+    }
+
+    const timeslotRule = await getRuleByExperienceId(id);
+
+    await conn.commit();
+
+    return res.status(200).json({
+      experience: {
+        ...experienceRes,
+        rule: timeslotRule,
+      },
+    });
+  } catch (error) {
+    if (conn) await conn.rollback();
     next(error);
   } finally {
     if (conn) conn.release();
