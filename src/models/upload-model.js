@@ -52,3 +52,10 @@ export const getTimeslotImageURLs = async (id) => {
     [id],
   );
 };
+
+export const getExperienceImageURLs = async (id) => {
+  return await pool.execute(
+    "SELECT url FROM timeslot_images WHERE experience_id = ?",
+    [id],
+  );
+}

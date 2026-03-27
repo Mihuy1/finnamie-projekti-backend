@@ -11,8 +11,12 @@ import { insertTimeslotActivitiesExperience } from "../models/timeslot-activitie
 import {
   insertTimeslotRule,
   getRuleByExperienceId,
+  putTimeslotRule,
 } from "../models/timeslot-rules-model.js";
-import { uploadTimeSlotImagesExperience } from "../models/upload-model.js";
+import {
+  getExperienceImageURLs,
+  uploadTimeSlotImagesExperience,
+} from "../models/upload-model.js";
 import { v4 as uuidv4 } from "uuid";
 import pool from "../utils/database.js";
 
@@ -72,6 +76,7 @@ export const createExperience = async (req, res, next) => {
   try {
     await conn.beginTransaction();
 
+    // 1. Insert the experience first (everything else depends on experience_id)
     const result = await insertExperience(
       conn,
       host_id,
@@ -89,54 +94,48 @@ export const createExperience = async (req, res, next) => {
 
     const experience_id = result.insertId;
 
+    // 2. Run images, rule, and activities inserts concurrently — they're independent
     const urls = imageFiles.map((file) => [
       `/uploads/timeslots/${file.filename}`,
       Number(experience_id),
     ]);
 
-    // Upload images if provided
-    const uploadedImages = await uploadTimeSlotImagesExperience(conn, urls);
+    const [uploadedImages, timeslotRuleResult, timeslotActivitiesResult] =
+      await Promise.all([
+        uploadTimeSlotImagesExperience(conn, urls),
+        insertTimeslotRule(
+          conn,
+          host_id,
+          experience_id,
+          start_date,
+          end_date,
+          start_time,
+          end_time,
+          weekdays_bitmask,
+          max_participants,
+        ),
+        insertTimeslotActivitiesExperience(
+          conn,
+          experience_id,
+          parsedActivityIds,
+        ),
+      ]);
 
-    if (
-      uploadedImages &&
-      uploadedImages.affectedRows === 0 &&
-      req.files?.images?.length > 0
-    ) {
+    if (uploadedImages?.affectedRows === 0 && imageFiles.length > 0) {
       await conn.rollback();
       return res.status(500).json({ message: "Error uploading images" });
     }
 
-    // Create the timeslot rule for the experience
-    const timeslotRuleResult = await insertTimeslotRule(
-      conn,
-      host_id,
-      experience_id,
-      start_date,
-      end_date,
-      start_time,
-      end_time,
-      weekdays_bitmask,
-      max_participants,
-    );
-
     if (timeslotRuleResult.affectedRows === 0) {
+      await conn.rollback();
       return res
         .status(500)
         .json({ message: "Error creating timeslot rule for experience" });
     }
 
-    const ruleId = timeslotRuleResult.insertId;
-
-    // Create associations with activities if provided
-    const timeslotActivitiesResult = await insertTimeslotActivitiesExperience(
-      conn,
-      experience_id,
-      parsedActivityIds || [],
-    );
-
     if (
       timeslotActivitiesResult.affectedRows === 0 &&
-      (parsedActivityIds || []).length > 0
+      parsedActivityIds.length > 0
     ) {
       await conn.rollback();
       return res
@@ -144,46 +143,65 @@ export const createExperience = async (req, res, next) => {
         .json({ message: "Error associating activities with experience" });
     }
 
+    // 3. Batch-insert all timeslots in a single query
+    const ruleId = Number(timeslotRuleResult.insertId);
+    const bitmask = Number(weekdays_bitmask);
+    const timeslotRows = [];
+    const timeslotParams = [];
+
     let currentDate = new Date(start_date);
     const endDate = new Date(end_date);
 
     while (currentDate <= endDate) {
-      const dayIndex = currentDate.getDay(); // Sunday = 0
-      const dayBit = 1 << dayIndex;
+      const dayBit = 1 << currentDate.getDay();
 
-      if ((weekdays_bitmask & dayBit) !== 0) {
+      if ((bitmask & dayBit) !== 0) {
         const dateStr = currentDate.toISOString().split("T")[0];
-        await conn.execute(
-          `INSERT INTO timeslot (id, host_id, experience_id, rule_id, start_time, end_time, max_participants) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [
-            uuidv4(),
-            host_id,
-            experience_id,
-            ruleId,
-            `${dateStr} ${start_time}`,
-            `${dateStr} ${end_time}`,
-            max_participants,
-          ],
+        timeslotRows.push("(?, ?, ?, ?, ?, ?, ?)");
+        timeslotParams.push(
+          uuidv4(),
+          host_id,
+          experience_id,
+          ruleId,
+          `${dateStr} ${start_time}`,
+          `${dateStr} ${end_time}`,
+          max_participants,
         );
       }
       currentDate.setDate(currentDate.getDate() + 1);
     }
+
+    if (timeslotRows.length > 0) {
+      await conn.execute(
+        `INSERT INTO timeslot (id, host_id, experience_id, rule_id, start_time, end_time, max_participants)
+         VALUES ${timeslotRows.join(", ")}`,
+        timeslotParams,
+      );
+    }
+
+    await conn.commit();
 
     const [createdExperience] = await conn.query(
       "SELECT * FROM experiences WHERE id = ?",
       [experience_id],
     );
 
-    const createdRule = await getRuleByExperienceId(experience_id, conn);
-
-    await conn.commit();
+    const images = await getExperienceImageURLs(experience_id);
 
     res.status(201).json({
       message: "Experience created successfully",
       experience: {
         ...createdExperience,
-        rule: createdRule,
+        rule: {
+          id: ruleId,
+          start_date,
+          end_date,
+          start_time,
+          end_time,
+          weekdays_bitmask,
+          max_participants,
+        },
+        images,
       },
     });
   } catch (error) {
@@ -222,14 +240,18 @@ export const updateExperience = async (req, res, next) => {
       await insertTimeslotActivitiesExperience(conn, id, parsedIds);
     }
 
-    const timeslotRule = await getRuleByExperienceId(id);
+    const timeslotRulePut = await putTimeslotRule(conn, id, experienceData);
+
+    // const timeslotRule = await getRuleByExperienceId(id);
+    const images = await getExperienceImageURLs(id);
 
     await conn.commit();
 
     return res.status(200).json({
       experience: {
         ...experienceRes,
-        rule: timeslotRule,
+        rule: timeslotRulePut,
+        images,
       },
     });
   } catch (error) {

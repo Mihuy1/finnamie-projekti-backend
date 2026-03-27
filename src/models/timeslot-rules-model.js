@@ -62,13 +62,12 @@ export const putTimeslotRule = async (conn = pool, id, data) => {
   const fields = { ...data };
 
   const allowed = [
-    "title",
-    "description",
-    "type",
-    "city",
-    "address",
-    "latitude_deg",
-    "longitude_deg",
+    "start_date",
+    "end_date",
+    "start_time",
+    "end_time",
+    "weekdays_bitmask",
+    "max_participants",
   ];
 
   const setClauses = [];
@@ -77,19 +76,26 @@ export const putTimeslotRule = async (conn = pool, id, data) => {
   for (const [key, rawVal] of Object.entries(fields)) {
     if (!allowed.includes(key)) continue;
 
+    console.log(`${key} = ?`);
+
     let val = rawVal;
+
+    console.log(rawVal);
 
     setClauses.push(`${key} = ?`);
     params.push(val);
   }
 
-  const q = `UPDATE timeslot_rules SET ${setClauses.join(", ")} WHERE id = ?`;
+  const q = `UPDATE timeslot_rules SET ${setClauses.join(", ")} WHERE experience_id = ?`;
 
   params.push(id);
 
   await conn.execute(q, params);
 
-  const rows = await conn.execute(`SELECT * FROM rules WHERE id = ?`, [id]);
+  const rows = await conn.execute(
+    `SELECT * FROM timeslot_rules WHERE experience_id = ?`,
+    [id],
+  );
 
   return rows[0] ?? null;
 };

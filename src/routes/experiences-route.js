@@ -22,7 +22,7 @@ experiencesRouter
   .get(allowRoles("host"), getExperiencesByHost)
   .post(
     allowRoles("host"),
-    upload.fields([{ name: "images", maxCount: 5 }]),
+    upload.fields([{ name: "images", maxCount: 10 }]),
     createExperience,
   );
 
@@ -30,6 +30,6 @@ experiencesRouter
   .route("/host/:id")
   .delete(allowRoles("host"), deleteExperienceById);
 
-experiencesRouter.route("/:id").put(allowRoles("host"), updateExperience);
+experiencesRouter.route("/:id").put(allowRoles("host"), upload.fields([{ name: "images", maxCount: 10 }]), updateExperience);
 
 export default experiencesRouter;

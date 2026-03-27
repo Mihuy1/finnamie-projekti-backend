@@ -1,5 +1,6 @@
 import pool from "../utils/database.js";
 import { getRuleByExperienceId } from "./timeslot-rules-model.js";
+import { getExperienceImageURLs } from "./upload-model.js";
 
 export const getAllExperiences = async () => {
   const rows = await pool.query("SELECT * FROM experiences");
@@ -53,31 +54,55 @@ export const getAllExperiencesWithHost = async () => {
      WHERE u.role = 'host' ORDER BY e.id DESC`,
   );
 
-  for (let exp of experiences) {
-    const activities = await pool.query(
-      `SELECT a.id, a.name
+  if (experiences.length === 0) return experiences;
+
+  const expIds = experiences.map((e) => e.id);
+
+  const [allActivities, allImages, allRules] = await Promise.all([
+    pool.query(
+      `SELECT ta.experience_id, a.id, a.name
        FROM timeslot_activities ta
        JOIN activities a ON a.id = ta.activity_id
-       WHERE ta.experience_id = ?`,
-      [exp.id],
-    );
+       WHERE ta.experience_id IN (?)`,
+      [expIds],
+    ),
+    pool.query(
+      `SELECT experience_id, url FROM timeslot_images WHERE experience_id IN (?)`,
+      [expIds],
+    ),
+    pool.query(
+      `SELECT tr.id, tr.experience_id, tr.start_date, tr.end_date, tr.start_time,
+              tr.end_time, tr.weekdays_bitmask, tr.max_participants
+       FROM timeslot_rules tr
+       WHERE tr.experience_id IN (?)`,
+      [expIds],
+    ),
+  ]);
 
-    const images = await pool.query(
-      `SELECT url FROM timeslot_images WHERE experience_id = ?`,
-      [exp.id],
-    );
+  const activitiesMap = new Map();
+  for (const row of allActivities) {
+    if (!activitiesMap.has(row.experience_id))
+      activitiesMap.set(row.experience_id, []);
+    activitiesMap.get(row.experience_id).push({ id: row.id, name: row.name });
+  }
 
-    const rule = await pool.query(
-      `SELECT e.id, tr.start_date, tr.end_date, tr.start_time, tr.end_time, tr.weekdays_bitmask, tr.max_participants
-      FROM timeslot_rules tr
-      JOIN experiences e ON e.id = tr.experience_id
-      WHERE tr.experience_id = ?`,
-      exp.id,
-    );
+  const imagesMap = new Map();
+  for (const row of allImages) {
+    if (!imagesMap.has(row.experience_id))
+      imagesMap.set(row.experience_id, []);
+    imagesMap.get(row.experience_id).push({ url: row.url });
+  }
 
-    exp.rule = rule;
-    exp.images = images;
-    exp.activities = activities;
+  const rulesMap = new Map();
+  for (const row of allRules) {
+    rulesMap.set(row.experience_id, row);
+  }
+
+  // Attach related data to each experience
+  for (const exp of experiences) {
+    exp.activities = activitiesMap.get(exp.id) || [];
+    exp.images = imagesMap.get(exp.id) || [];
+    exp.rule = rulesMap.get(exp.id) || null;
   }
 
   return experiences;

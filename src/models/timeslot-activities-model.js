@@ -48,7 +48,7 @@ export const insertTimeslotActivitiesExperience = async (
         .filter((n) => Number.isInteger(n) && n > 0)
     : [];
 
-  await pool.execute(
+  await conn.execute(
     "DELETE FROM timeslot_activities WHERE experience_id = ?",
     [experienceId],
   );
