@@ -13,6 +13,22 @@ export const getActivitiesByTimeslotId = async (timeslotId) => {
   );
 };
 
+export const getActivitiesByExperienceId = async (
+  experienceId,
+  conn = pool,
+) => {
+  const rows = await conn.query(
+    `SELECT a.id, a.name
+     FROM timeslot_activities ta
+     JOIN activities a ON a.id = ta.activity_id
+     WHERE ta.experience_id = ?
+     ORDER BY a.name ASC`,
+    [experienceId],
+  );
+
+  return rows;
+};
+
 export const setActivitiesForTimeslot = async (timeslotId, activityIds) => {
   const ids = Array.isArray(activityIds)
     ? activityIds
@@ -59,8 +75,10 @@ export const insertTimeslotActivitiesExperience = async (
   const placeholders = ids.map(() => "(?, ?)").join(", ");
   const params = ids.flatMap((activityId) => [experienceId, activityId]);
 
-  return conn.execute(
+  const result = await conn.execute(
     `INSERT INTO timeslot_activities (experience_id, activity_id) VALUES ${placeholders}`,
     params,
   );
+
+  return result;
 };

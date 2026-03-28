@@ -7,7 +7,10 @@ import {
   putExperience,
   removeExperience,
 } from "../models/experiences-model.js";
-import { insertTimeslotActivitiesExperience } from "../models/timeslot-activities-model.js";
+import {
+  getActivitiesByExperienceId,
+  insertTimeslotActivitiesExperience,
+} from "../models/timeslot-activities-model.js";
 import {
   insertTimeslotRule,
   getRuleByExperienceId,
@@ -223,26 +226,51 @@ export const updateExperience = async (req, res, next) => {
     conn = await pool.getConnection();
     await conn.beginTransaction();
 
+    const dataForPutExperience = {
+      ...experienceData,
+    };
+
+    delete dataForPutExperience.rule;
+
     const experienceRes = await putExperience(
       conn,
       id,
-      experienceData,
+      dataForPutExperience,
       host_id,
     );
 
-    if (experienceRes === null)
+    if (experienceRes === null) {
+      await conn.rollback();
       return res.status(404).json({ message: "Failed to update experience" });
+    }
 
     if (activity_ids !== undefined) {
       const parsedIds = Array.isArray(activity_ids)
         ? activity_ids
         : JSON.parse(activity_ids);
-      await insertTimeslotActivitiesExperience(conn, id, parsedIds);
+
+      const activityIdsRes = await insertTimeslotActivitiesExperience(
+        conn,
+        id,
+        parsedIds,
+      );
+
+      if (parsedIds.length > 0 && activityIdsRes?.affectedRows === 0) {
+        await conn.rollback();
+        return res
+          .status(500)
+          .json({ message: "Failed to update Activity Ids" });
+      }
     }
 
-    const timeslotRulePut = await putTimeslotRule(conn, id, experienceData);
+    const updatedActivities = await getActivitiesByExperienceId(id, conn);
 
-    // const timeslotRule = await getRuleByExperienceId(id);
+    const timeslotRulePut = await putTimeslotRule(
+      conn,
+      id,
+      JSON.parse(experienceData.rule),
+    );
+
     const images = await getExperienceImageURLs(id);
 
     await conn.commit();
@@ -250,6 +278,7 @@ export const updateExperience = async (req, res, next) => {
     return res.status(200).json({
       experience: {
         ...experienceRes,
+        activities: updatedActivities,
         rule: timeslotRulePut,
         images,
       },

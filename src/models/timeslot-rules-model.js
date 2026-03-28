@@ -70,13 +70,11 @@ export const putTimeslotRule = async (conn = pool, id, data) => {
     "max_participants",
   ];
 
-  const setClauses = [];
   const params = [];
+  const setClauses = [];
 
   for (const [key, rawVal] of Object.entries(fields)) {
     if (!allowed.includes(key)) continue;
-
-    console.log(`${key} = ?`);
 
     let val = rawVal;
 
