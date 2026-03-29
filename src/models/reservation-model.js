@@ -33,8 +33,8 @@ export const cancelReservationModel = async (timeslotID, guestID) => {
 };
 
 export const confirmReservationModel = async (timeslotID, hostID) => {
-  // TODO:
   // sähköposti hostille, kun joku peruu timeslotin?
+
   // varmista, että hosti omistaa timeslotin
   const ownedTimeslots = await pool.execute(
     "SELECT id FROM timeslot WHERE host_id = ?",
@@ -50,7 +50,7 @@ export const confirmReservationModel = async (timeslotID, hostID) => {
 };
 
 export const getReservationInformationModel = async (guestID) => {
-  // pitää tehdä näin, koska useassa taulukoissa id sarake
+  // pitää tehdä näin, koska useassa taulukossa id sarake
 
   const q = `SELECT r.id AS reservation_id, r.guest_id, r.booking_status, r.res_date,
              t.id AS timeslot_id, t.host_id, t.type, t.created_at, t.start_time, t.end_time, 

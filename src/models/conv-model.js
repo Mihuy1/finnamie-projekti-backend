@@ -9,14 +9,14 @@ export const getMessagesByConvIdModel = async (id) => {
 };
 
 // Hakee käyttäjän keskustelut ja vastaanottajan datan.
-// TODO: Aika ruma
 export const getConvsByUserIdModel = async (id) => {
   return pool.query(
-    `SELECT c.id AS conv_id, u.id AS user_id, u.first_name, u.last_name FROM conversations c 
-    JOIN conversation_join cj ON c.id = cj.conv_id 
-    JOIN users u ON cj.user_id = u.id WHERE c.id IN 
-    (SELECT conv_id FROM conversation_join WHERE user_id = ?) AND NOT u.id = ?`,
-    [id, id],
+    `SELECT DISTINCT cj2.conv_id AS conv_id, u.id AS user_id, u.first_name, u.last_name
+    FROM conversation_join cj1
+    JOIN conversation_join cj2 ON cj1.conv_id = cj2.conv_id AND cj2.user_id != cj1.user_id
+    JOIN users u ON u.id = cj2.user_id
+    WHERE cj1.user_id = ?`,
+    [id],
   );
 };
 
@@ -38,8 +38,11 @@ export const postMessageModel = async (message) => {
 };
 
 export const startConversationModel = async (sender_id, receiver_id) => {
-  // TODO:
-  // estä uuden keskustelun aloittaminen, jos keskutelu lähettäjän ja vastaanottajan välillä on jo olemassa
+  // Check if conversation already exists
+  const existingConv = await getConversation(sender_id, receiver_id);
+  if (existingConv) {
+    throw new Error("Conversations between users already exists.");
+  }
   const conv_id = uuidv4();
   try {
     await pool.execute("INSERT INTO conversations(id) VALUES(?)", conv_id);
