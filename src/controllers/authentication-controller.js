@@ -84,6 +84,7 @@ const register = async (req, res, next) => {
       role,
       country,
       date_of_birth,
+      gender,
       // Host specific fields (extracted from req.body)
       phone_number,
       street_address,
@@ -91,7 +92,6 @@ const register = async (req, res, next) => {
       city,
       description,
       experience_length,
-
       activity_ids,
     } = req.body;
 
@@ -121,7 +121,10 @@ const register = async (req, res, next) => {
       role: role,
       country,
       date_of_birth,
+      gender,
     };
+
+    console.log("registeredUser:", registeredUser);
 
     const result = await addUser(registeredUser);
 
@@ -146,7 +149,7 @@ const register = async (req, res, next) => {
       .json({ message: "Registration successful!", userId: result.id });
   } catch (error) {
     res.status(400).json({ message: "something went wrong:", error });
-    console.log("Error:", error);
+    console.error("Error:", error);
     next(error);
   }
 };
@@ -163,6 +166,7 @@ const updateProfile = async (req, res, next) => {
       confirmPassword,
       country,
       date_of_birth,
+      gender,
       // Host specific fields (extracted from req.body)
       phone_number,
       street_address,
@@ -198,6 +202,7 @@ const updateProfile = async (req, res, next) => {
       password: hashedPassword,
       country,
       date_of_birth,
+      gender,
     };
 
     await modifyUser(id, updatedUser);
@@ -234,7 +239,6 @@ const getProfileInfo = async (req, res, next) => {
     if (user.role === "host") {
       const hostUser = await getHostProfileUserId(req.user.id);
       const hostActivites = await getHostActivitiesByUserId(req.user.id);
-
       if (!hostUser)
         return res.status(404).json({ message: "Host profile not found" });
 

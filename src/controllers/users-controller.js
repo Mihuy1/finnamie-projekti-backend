@@ -7,8 +7,14 @@ import {
   addUser,
   modifyUser,
   getUserPublicInfoByid,
+  removeUser,
 } from "../models/users-model.js";
-import { getHostActivitiesByUserId } from "../models/host-activities-model.js";
+import {
+  deleteHostActivity,
+  getHostActivitiesByUserId,
+} from "../models/host-activities-model.js";
+import { getHostProfileUserId } from "../models/host-profile-model.js";
+import { deleteAllTimeslotsByHostId } from "../models/timeslot-model.js";
 
 const getUsers = async (req, res, next) => {
   try {
@@ -64,7 +70,6 @@ const postUser = async (req, res, next) => {
 
     const createdUser = await addUser(newUser);
 
-    console.log(createdUser);
     res.status(201).json(createdUser);
   } catch (error) {
     if (error.errno === 1062 || error.code === "ER_DUP_ENTRY") {
@@ -139,4 +144,36 @@ const putUser = async (req, res, next) => {
   }
 };
 
-export { getUsers, getUserById, getUserPublicInfo, postUser, putUser };
+const deleteUser = async (req, res, next) => {
+  const { id } = req.params;
+  // const userId = req.user.id;
+
+  try {
+    const user = await getUserByIdModel(id);
+    if (!user) return res.status(404).json({ message: "No user found" });
+
+    if (user.role === "host") {
+      const hostProfile = await getHostProfileUserId(id);
+
+      if (hostProfile) {
+        await deleteHostActivity(hostProfile.host_profile_id);
+        await deleteAllTimeslotsByHostId(id);
+      }
+    }
+
+    await removeUser(id);
+
+    return res.status(202).json({ message: "User Deleted." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export {
+  getUsers,
+  getUserById,
+  getUserPublicInfo,
+  postUser,
+  putUser,
+  deleteUser,
+};

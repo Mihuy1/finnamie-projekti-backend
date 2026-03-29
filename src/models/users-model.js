@@ -3,13 +3,11 @@ import { v4 as uuidv4 } from "uuid";
 
 const listAllUsers = async () => {
   const rows = await pool.query("SELECT * FROM users");
-  console.log("rows", rows);
   return rows;
 };
 
 const getUserByIdModel = async (id) => {
   const rows = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
-  console.log("rows", rows);
 
   return rows[0] ?? null;
 };
@@ -24,7 +22,7 @@ const getUserPublicInfoByid = async (id) => {
 
 const getUserProfileInfoById = async (id) => {
   const rows = await pool.query(
-    "SELECT first_name, last_name, email, role, country, date_of_birth, image_url FROM users WHERE id = ?",
+    "SELECT first_name, last_name, email, role, country, date_of_birth, gender, image_url FROM users WHERE id = ?",
     [id],
   );
 
@@ -48,13 +46,14 @@ const addUser = async (user) => {
     role,
     country,
     date_of_birth,
+    gender,
     image_url,
   } = user;
 
   if (!id) id = uuidv4();
 
-  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, country, date_of_birth, image_url) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, country, date_of_birth, gender, image_url) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   const params = [
     id,
     first_name,
@@ -64,6 +63,7 @@ const addUser = async (user) => {
     role,
     country,
     date_of_birth,
+    gender,
     image_url,
   ].map((value) => value ?? null);
 
@@ -76,6 +76,7 @@ const addUser = async (user) => {
     email,
     role,
     date_of_birth,
+    gender,
     country,
   };
 };
@@ -89,6 +90,7 @@ const modifyUser = async (id, user) => {
     role,
     country,
     date_of_birth,
+    gender,
   } = user;
 
   const fields = [];
@@ -126,6 +128,11 @@ const modifyUser = async (id, user) => {
     params.push(date_of_birth);
   }
 
+  if (gender !== undefined) {
+    fields.push("gender = ?");
+    params.push(gender);
+  }
+
   if (fields.length === 0) return { affectedRows: 0 };
 
   params.push(id);
@@ -144,6 +151,12 @@ const getUserByEmail = async (email) => {
   return rows[0] ?? null;
 };
 
+const removeUser = async (id) => {
+  const rows = await pool.execute(`DELETE FROM users WHERE id = ?`, [id]);
+
+  return rows[0] ?? null;
+};
+
 export {
   listAllUsers,
   getUserByIdModel,
@@ -153,4 +166,5 @@ export {
   modifyUser,
   getUserImageById,
   getUserProfileInfoById,
+  removeUser,
 };

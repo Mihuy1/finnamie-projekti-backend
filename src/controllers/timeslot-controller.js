@@ -43,7 +43,8 @@ const createNewTimeslot = async (req, res, next) => {
       latitude_deg,
       longitude_deg,
       address,
-      activity_ids, // indoor/outdoor
+      activity_ids,
+      res_status,
     } = req.body;
 
     const timeslot = {
@@ -57,6 +58,7 @@ const createNewTimeslot = async (req, res, next) => {
       latitude_deg,
       longitude_deg,
       address,
+      res_status,
     };
 
     const missing = checkMissingFields(Object.entries(timeslot));

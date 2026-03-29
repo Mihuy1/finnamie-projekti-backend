@@ -61,3 +61,15 @@ export const setHostActivitiesByUserId = async (userId, activityIds) => {
     params,
   );
 };
+
+export const deleteHostActivity = async (userId) => {
+  try {
+    const q = "DELETE FROM host_profile_activities WHERE host_profile_id = ?";
+
+    const res = await pool.query(q, [userId]);
+
+    return res.affectedRows > 0;
+  } catch (error) {
+    console.error("Error delete host activity:", error);
+  }
+};

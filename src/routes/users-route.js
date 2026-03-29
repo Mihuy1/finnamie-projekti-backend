@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  deleteUser,
   getUserById,
   getUserPublicInfo,
   getUsers,
@@ -16,6 +17,10 @@ userRouter.use(authorize);
 
 userRouter.route("/").get(getUsers).post(allowRoles("admin"), postUser);
 
-userRouter.route("/:id").get(getUserById).put(allowRoles("admin"), putUser);
+userRouter
+  .route("/:id")
+  .get(getUserById)
+  .put(allowRoles("admin"), putUser)
+  .delete(allowRoles("admin"), deleteUser);
 
 export default userRouter;

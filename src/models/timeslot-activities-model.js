@@ -1,7 +1,7 @@
 import pool from "../utils/database.js";
 
 export const getActivitiesByTimeslotId = async (timeslotId) => {
-  return await pool.query(
+  return await pool.execute(
     `
     SELECT a.id, a.name
     FROM timeslot_activities ta

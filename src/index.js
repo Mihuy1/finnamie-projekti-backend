@@ -6,6 +6,8 @@ import timeslotRouter from "./routes/timeslot-route.js";
 import reviewRouter from "./routes/review-route.js";
 import convRouter from "./routes/conv-route.js";
 import activitiesRouter from "./routes/activities-route.js";
+import activitiesSuggestionsRoute from "./routes/activities-suggestions-route.js";
+import reservationRouter from "./routes/reservation-route.js";
 
 const router = express.Router();
 
@@ -16,5 +18,7 @@ router.use("/reviews", reviewRouter);
 router.use("/media", uploadRouter);
 router.use("/conversations", convRouter);
 router.use("/activities", activitiesRouter);
+router.use("/activities/suggestions", activitiesSuggestionsRoute);
+router.use("/reservations", reservationRouter);
 
 export default router;
