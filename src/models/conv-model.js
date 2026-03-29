@@ -52,3 +52,10 @@ export const startConversationModel = async (sender_id, receiver_id) => {
     throw new Error(err);
   }
 };
+
+export const getConversation = async (sender_id, receiver_id) => {
+  const q = `SELECT conv_id FROM conversation_join WHERE user_id IN 
+            ( ?, ?) GROUP BY conv_id HAVING COUNT(DISTINCT user_id) = 2`;
+  const rows = await pool.execute(q, [sender_id, receiver_id]);
+  return rows[0];
+};

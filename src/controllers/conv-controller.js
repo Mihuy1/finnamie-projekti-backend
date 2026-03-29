@@ -1,4 +1,5 @@
 import {
+  getConversation,
   getConvsByUserIdModel,
   getMessagesByConvIdModel,
   postMessageModel,
@@ -42,6 +43,17 @@ export const startConversation = async (req, res, next) => {
     console.log(req.body);
     const convID = await startConversationModel(req.user.id, req.body.receiver);
     res.status(200).json({ convesation_id: convID });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getConvId = async (req, res, next) => {
+  try {
+    const convID = await getConversation(req.user.id, req.params.receiver_id);
+    console.log(convID);
+    if (!convID) res.status(404).json({ message: "No conversation found." });
+    res.status(200).json(convID);
   } catch (err) {
     next(err);
   }
