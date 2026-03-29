@@ -20,6 +20,7 @@ import {
   getExperienceImageURLs,
   uploadTimeSlotImagesExperience,
 } from "../models/upload-model.js";
+import { updateTimeslotsByExperienceId } from "../models/timeslot-model.js";
 import { v4 as uuidv4 } from "uuid";
 import pool from "../utils/database.js";
 
@@ -265,11 +266,21 @@ export const updateExperience = async (req, res, next) => {
 
     const updatedActivities = await getActivitiesByExperienceId(id, conn);
 
-    const timeslotRulePut = await putTimeslotRule(
-      conn,
-      id,
-      JSON.parse(experienceData.rule),
-    );
+    const parsedRule = JSON.parse(experienceData.rule);
+
+    const timeslotRulePut = await putTimeslotRule(conn, id, parsedRule);
+
+    // await updateTimeslotsByExperienceId(conn, id, {
+    //   type: dataForPutExperience.type,
+    //   description: dataForPutExperience.description,
+    //   city: dataForPutExperience.city,
+    //   latitude_deg: dataForPutExperience.latitude_deg,
+    //   longitude_deg: dataForPutExperience.longitude_deg,
+    //   address: dataForPutExperience.address,
+    //   start_time: parsedRule?.start_time,
+    //   end_time: parsedRule?.end_time,
+    //   max_participants: parsedRule?.max_participants,
+    // });
 
     const images = await getExperienceImageURLs(id);
 

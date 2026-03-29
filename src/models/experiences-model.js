@@ -88,8 +88,7 @@ export const getAllExperiencesWithHost = async () => {
 
   const imagesMap = new Map();
   for (const row of allImages) {
-    if (!imagesMap.has(row.experience_id))
-      imagesMap.set(row.experience_id, []);
+    if (!imagesMap.has(row.experience_id)) imagesMap.set(row.experience_id, []);
     imagesMap.get(row.experience_id).push({ url: row.url });
   }
 
@@ -179,6 +178,14 @@ export const removeExperience = async (host_id, experience_id) => {
     "DELETE FROM experiences WHERE id = ? AND host_id = ?",
     [experience_id, host_id],
   );
+
+  return rows;
+};
+
+export const getOwnedExperiences = async (host_id) => {
+  const q = "SELECT id, host_id FROM experiences WHERE host_id = ?";
+
+  const rows = await pool.query(q, [host_id]);
 
   return rows;
 };
