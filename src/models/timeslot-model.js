@@ -30,6 +30,17 @@ const timeslotById = async (id) => {
   ];
 };
 
+const timeslotByExperienceId = async (experienceId, conn = pool) => {
+  const timeslots = await conn.query(
+    "SELECT * FROM timeslot WHERE experience_id = ?",
+    [experienceId],
+  );
+
+  if (timeslots.length === 0) return [];
+
+  return timeslots;
+};
+
 // varmaan turha
 const timeslotHistory = async (id) => {
   return await pool.query(
@@ -165,65 +176,87 @@ const updateTimeslotsByExperienceId = async (
   experienceId,
   data,
 ) => {
-  const { ...fields } = data;
-  if (!experienceId) throw new Error("experience_id is required");
+  if (!data || !getExperienceById || !conn) return;
 
-  const allowed = [
-    "type",
-    "start_time",
-    "end_time",
-    "description",
-    "city",
-    "latitude_deg",
-    "longitude_deg",
-    "address",
-    "max_participants",
-  ];
+  try {
+    const timeslots = timeslotByExperienceId(experienceId, conn);
 
-  const setClauses = [];
-  const params = [];
+    if (timeslots.length === 0) return null;
 
-  for (const [key, rawVal] of Object.entries(fields)) {
-    if (!allowed.includes(key) || rawVal === undefined) continue;
+    console.log("timeslots:", timeslots);
 
-    let val = rawVal;
+    const parsedStartTime = data.start_date;
 
-    if (key === "start_time" || key === "end_time") {
-      if (typeof val === "string") {
-        const normalized = val.replace("Z", "").replace("T", " ");
-        const timeOnly = normalized.includes(" ")
-          ? normalized.split(" ")[1]
-          : normalized;
-        val = /^\d{2}:\d{2}$/.test(timeOnly) ? `${timeOnly}:00` : timeOnly;
-      }
-
-      // Keep each row's date, only overwrite the time component.
-      setClauses.push(`${key} = TIMESTAMP(DATE(${key}), ?)`);
-      params.push(val);
-      continue;
-    }
-
-    setClauses.push(`${key} = ?`);
-    params.push(val);
+    const q = "UPDATE timeslot SET start_date";
+  } catch (error) {
+    throw new Error("Failed to update timeslot by experience id:", error);
   }
-
-  if (setClauses.length === 0) {
-    return await conn.query(
-      "SELECT * FROM timeslot WHERE experience_id = ? ORDER BY start_time ASC",
-      [experienceId],
-    );
-  }
-
-  const q = `UPDATE timeslot SET ${setClauses.join(", ")} WHERE experience_id = ?`;
-  params.push(experienceId);
-
-  await conn.execute(q, params);
-
-  return await conn.query(
-    "SELECT * FROM timeslot WHERE experience_id = ? ORDER BY start_time ASC",
-    [experienceId],
-  );
 };
+
+// const updateTimeslotsByExperienceId = async (
+//   conn = pool,
+//   experienceId,
+//   data,
+// ) => {
+//   const { ...fields } = data;
+//   if (!experienceId) throw new Error("experience_id is required");
+
+//   const allowed = [
+//     "type",
+//     "start_time",
+//     "end_time",
+//     "description",
+//     "city",
+//     "latitude_deg",
+//     "longitude_deg",
+//     "address",
+//     "max_participants",
+//   ];
+
+//   const setClauses = [];
+//   const params = [];
+
+//   for (const [key, rawVal] of Object.entries(fields)) {
+//     if (!allowed.includes(key) || rawVal === undefined) continue;
+
+//     let val = rawVal;
+
+//     if (key === "start_time" || key === "end_time") {
+//       if (typeof val === "string") {
+//         const normalized = val.replace("Z", "").replace("T", " ");
+//         const timeOnly = normalized.includes(" ")
+//           ? normalized.split(" ")[1]
+//           : normalized;
+//         val = /^\d{2}:\d{2}$/.test(timeOnly) ? `${timeOnly}:00` : timeOnly;
+//       }
+
+//       // Keep each row's date, only overwrite the time component.
+//       setClauses.push(`${key} = TIMESTAMP(DATE(${key}), ?)`);
+//       params.push(val);
+//       continue;
+//     }
+
+//     setClauses.push(`${key} = ?`);
+//     params.push(val);
+//   }
+
+//   if (setClauses.length === 0) {
+//     return await conn.query(
+//       "SELECT * FROM timeslot WHERE experience_id = ? ORDER BY start_time ASC",
+//       [experienceId],
+//     );
+//   }
+
+//   const q = `UPDATE timeslot SET ${setClauses.join(", ")} WHERE experience_id = ?`;
+//   params.push(experienceId);
+
+//   await conn.execute(q, params);
+
+//   return await conn.query(
+//     "SELECT * FROM timeslot WHERE experience_id = ? ORDER BY start_time ASC",
+//     [experienceId],
+//   );
+// };
 
 const deleteTimeslot = async (id, host_id) => {
   const q = "DELETE FROM timeslot_images WHERE timeslot_id = ?";

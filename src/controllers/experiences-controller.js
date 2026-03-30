@@ -270,17 +270,21 @@ export const updateExperience = async (req, res, next) => {
 
     const timeslotRulePut = await putTimeslotRule(conn, id, parsedRule);
 
-    // await updateTimeslotsByExperienceId(conn, id, {
-    //   type: dataForPutExperience.type,
-    //   description: dataForPutExperience.description,
-    //   city: dataForPutExperience.city,
-    //   latitude_deg: dataForPutExperience.latitude_deg,
-    //   longitude_deg: dataForPutExperience.longitude_deg,
-    //   address: dataForPutExperience.address,
-    //   start_time: parsedRule?.start_time,
-    //   end_time: parsedRule?.end_time,
-    //   max_participants: parsedRule?.max_participants,
-    // });
+    if (timeslotRulePut) {
+      await updateTimeslotsByExperienceId(conn, id, {
+        type: dataForPutExperience.type,
+        description: dataForPutExperience.description,
+        city: dataForPutExperience.city,
+        latitude_deg: dataForPutExperience.latitude_deg,
+        longitude_deg: dataForPutExperience.longitude_deg,
+        address: dataForPutExperience.address,
+        start_date: parsedRule.start_date,
+        end_date: parsedRule.end_date,
+        start_time: parsedRule?.start_time,
+        end_time: parsedRule?.end_time,
+        max_participants: parsedRule?.max_participants,
+      });
+    }
 
     const images = await getExperienceImageURLs(id);
 
