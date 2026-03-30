@@ -1,7 +1,6 @@
 import {
   getAllExperiences,
   getAllExperiencesWithHost,
-  getExperienceById,
   getExperiencesByHostId,
   insertExperience,
   putExperience,
@@ -20,9 +19,37 @@ import {
   getExperienceImageURLs,
   uploadTimeSlotImagesExperience,
 } from "../models/upload-model.js";
-import { updateTimeslotsByExperienceId } from "../models/timeslot-model.js";
+import { generateTimeslots } from "../models/timeslot-model.js";
 import { v4 as uuidv4 } from "uuid";
 import pool from "../utils/database.js";
+
+const RULE_SYNC_FIELDS = [
+  "start_date",
+  "end_date",
+  "start_time",
+  "end_time",
+  "weekdays_bitmask",
+  "max_participants",
+];
+
+const normalizeRuleField = (key, value) => {
+  if (value === null || value === undefined) return "";
+
+  if (key === "weekdays_bitmask" || key === "max_participants") {
+    return String(Number(value));
+  }
+
+  if (key === "start_time" || key === "end_time") {
+    return String(value).slice(0, 8);
+  }
+
+  return String(value);
+};
+
+const parseMaybeJson = (value) => {
+  if (typeof value === "string") return JSON.parse(value);
+  return value;
+};
 
 export const fetchAllExperiences = async (req, res, next) => {
   try {
@@ -266,24 +293,75 @@ export const updateExperience = async (req, res, next) => {
 
     const updatedActivities = await getActivitiesByExperienceId(id, conn);
 
-    const parsedRule = JSON.parse(experienceData.rule);
+    let responseRule = await getRuleByExperienceId(id, conn);
+    const incomingRuleRaw = experienceData.rule;
 
-    const timeslotRulePut = await putTimeslotRule(conn, id, parsedRule);
+    if (incomingRuleRaw !== undefined) {
+      const incomingRule = parseMaybeJson(incomingRuleRaw) || {};
+      const mergedRule = {
+        ...(responseRule || {}),
+        ...incomingRule,
+      };
 
-    if (timeslotRulePut) {
-      await updateTimeslotsByExperienceId(conn, id, {
-        type: dataForPutExperience.type,
-        description: dataForPutExperience.description,
-        city: dataForPutExperience.city,
-        latitude_deg: dataForPutExperience.latitude_deg,
-        longitude_deg: dataForPutExperience.longitude_deg,
-        address: dataForPutExperience.address,
-        start_date: parsedRule.start_date,
-        end_date: parsedRule.end_date,
-        start_time: parsedRule?.start_time,
-        end_time: parsedRule?.end_time,
-        max_participants: parsedRule?.max_participants,
-      });
+      const ruleChanged = RULE_SYNC_FIELDS.some(
+        (field) =>
+          normalizeRuleField(field, responseRule?.[field]) !==
+          normalizeRuleField(field, mergedRule?.[field]),
+      );
+
+      if (ruleChanged) {
+        const timeslotRulePut = await putTimeslotRule(conn, id, mergedRule);
+        const ruleId = Number(
+          mergedRule.id ?? incomingRule.id ?? timeslotRulePut?.id,
+        );
+
+        if (!ruleId) {
+          await conn.rollback();
+          return res
+            .status(400)
+            .json({ message: "Missing timeslot rule id for safe sync" });
+        }
+
+        const patchTimeslotsSql = `
+          UPDATE timeslot
+          SET
+            max_participants = ?,
+            start_time = CONCAT(DATE(start_time), ' ', ?),
+            end_time = CONCAT(DATE(end_time), ' ', ?)
+          WHERE rule_id = ?
+            AND start_time > NOW()
+            AND current_bookings = 0
+        `;
+
+        await conn.execute(patchTimeslotsSql, [
+          mergedRule.max_participants,
+          mergedRule.start_time,
+          mergedRule.end_time,
+          ruleId,
+        ]);
+
+        const pruneTimeslotsSql = `
+          DELETE FROM timeslot
+          WHERE rule_id = ?
+            AND start_time > NOW()
+            AND current_bookings = 0
+            AND (
+              DATE(start_time) < ?
+              OR DATE(start_time) > ?
+              OR ((1 << (DAYOFWEEK(start_time) - 1)) & ?) = 0
+            )
+        `;
+
+        await conn.execute(pruneTimeslotsSql, [
+          ruleId,
+          mergedRule.start_date,
+          mergedRule.end_date,
+          Number(mergedRule.weekdays_bitmask),
+        ]);
+
+        await generateTimeslots(conn, { ...mergedRule, id: ruleId }, id);
+        responseRule = timeslotRulePut;
+      }
     }
 
     const images = await getExperienceImageURLs(id);
@@ -294,7 +372,7 @@ export const updateExperience = async (req, res, next) => {
       experience: {
         ...experienceRes,
         activities: updatedActivities,
-        rule: timeslotRulePut,
+        rule: responseRule,
         images,
       },
     });

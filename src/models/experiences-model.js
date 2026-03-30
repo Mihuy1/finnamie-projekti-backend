@@ -161,6 +161,14 @@ export const putExperience = async (conn = pool, id, data, host_id) => {
     params.push(val);
   }
 
+  if (setClauses.length === 0) {
+    const rows = await conn.query(
+      "SELECT * FROM experiences WHERE id = ? AND host_id = ?",
+      [id, host_id],
+    );
+    return rows[0] ?? null;
+  }
+
   const q = `UPDATE experiences SET ${setClauses.join(", ")} WHERE id = ? AND host_id = ?`;
   params.push(id);
   params.push(host_id);

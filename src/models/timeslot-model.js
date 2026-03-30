@@ -1,5 +1,6 @@
 import pool from "../utils/database.js";
 import { getTimeslotImageURLs } from "./upload-model.js";
+import { v4 as uuidv4 } from "uuid";
 
 const listAllTimeslot = async () => {
   const rows = await pool.query("SELECT * FROM timeslot");
@@ -171,26 +172,100 @@ const updateTimeslot = async (id, data) => {
   return rows[0] ?? null;
 };
 
-const updateTimeslotsByExperienceId = async (
-  conn = pool,
-  experienceId,
-  data,
-) => {
-  if (!data || !getExperienceById || !conn) return;
+const generateTimeslots = async (conn = pool, parsedRule, experienceId) => {
+  if (!experienceId) throw new Error("experience_id is required");
 
-  try {
-    const timeslots = timeslotByExperienceId(experienceId, conn);
+  const ruleId = Number(parsedRule?.id);
+  if (!ruleId) throw new Error("rule_id is required for timeslot generation");
 
-    if (timeslots.length === 0) return null;
+  const [experience] = await conn.query(
+    "SELECT host_id FROM experiences WHERE id = ?",
+    [experienceId],
+  );
 
-    console.log("timeslots:", timeslots);
-
-    const parsedStartTime = data.start_date;
-
-    const q = "UPDATE timeslot SET start_date";
-  } catch (error) {
-    throw new Error("Failed to update timeslot by experience id:", error);
+  if (!experience?.host_id) {
+    throw new Error("Experience not found for timeslot generation");
   }
+
+  const bitmask = Number(parsedRule.weekdays_bitmask);
+  const startDate = new Date(parsedRule.start_date);
+  const endDate = new Date(parsedRule.end_date);
+  const candidates = [];
+
+  const toSqlDateTime = (value) => {
+    if (typeof value === "string") {
+      return value.replace("T", " ").slice(0, 19);
+    }
+
+    return new Date(value).toISOString().slice(0, 19).replace("T", " ");
+  };
+
+  for (
+    let currentDate = new Date(startDate);
+    currentDate <= endDate;
+    currentDate.setDate(currentDate.getDate() + 1)
+  ) {
+    const dayBit = 1 << currentDate.getDay();
+
+    if ((bitmask & dayBit) === 0) continue;
+
+    const dateStr = currentDate.toISOString().slice(0, 10);
+    candidates.push({
+      start_time: `${dateStr} ${parsedRule.start_time}`,
+      end_time: `${dateStr} ${parsedRule.end_time}`,
+      max_participants: Number(parsedRule.max_participants),
+    });
+  }
+
+  if (candidates.length === 0) {
+    return { affectedRows: 0 };
+  }
+
+  const dateStart = parsedRule.start_date;
+  const dateEnd = parsedRule.end_date;
+
+  const existingRows = await conn.query(
+    `SELECT start_time, end_time
+     FROM timeslot
+     WHERE rule_id = ?
+       AND DATE(start_time) BETWEEN ? AND ?`,
+    [ruleId, dateStart, dateEnd],
+  );
+
+  const existingKeys = new Set(
+    existingRows.map(
+      (row) =>
+        `${toSqlDateTime(row.start_time)}|${toSqlDateTime(row.end_time)}`,
+    ),
+  );
+
+  const rows = [];
+  const params = [];
+
+  for (const slot of candidates) {
+    const key = `${toSqlDateTime(slot.start_time)}|${toSqlDateTime(slot.end_time)}`;
+    if (existingKeys.has(key)) continue;
+
+    rows.push("(?, ?, ?, ?, ?, ?, ?)");
+    params.push(
+      uuidv4(),
+      experience.host_id,
+      Number(experienceId),
+      ruleId,
+      slot.start_time,
+      slot.end_time,
+      slot.max_participants,
+    );
+  }
+
+  if (rows.length === 0) {
+    return { affectedRows: 0 };
+  }
+
+  const q = `INSERT INTO timeslot (id, host_id, experience_id, rule_id, start_time, end_time, max_participants)
+             VALUES ${rows.join(", ")}`;
+
+  return await conn.execute(q, params);
 };
 
 // const updateTimeslotsByExperienceId = async (
@@ -320,7 +395,7 @@ export {
   timeslotById,
   addTimeSlot,
   updateTimeslot,
-  updateTimeslotsByExperienceId,
+  generateTimeslots,
   deleteTimeslot,
   timeslotHistory,
   getOwnedTimeslots,
