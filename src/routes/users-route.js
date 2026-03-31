@@ -7,7 +7,7 @@ import {
   postUser,
   putUser,
 } from "../controllers/users-controller.js";
-import { allowRoles, allowSelfOrAdmin, authorize } from "../middlewares.js";
+import { allowRoles, authorize } from "../middlewares.js";
 
 const userRouter = express.Router();
 

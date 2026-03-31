@@ -20,7 +20,7 @@ export const getTimeslotRuleByExperienceId = async (experience_id) => {
 
 export const getRuleByExperienceId = async (experience_id, conn = pool) => {
   const rows = await conn.query(
-    `SELECT tr.start_date, tr.end_date, tr.start_time, tr.end_time,
+    `SELECT tr.id as rule_id, tr.start_date, tr.end_date, tr.start_time, tr.end_time,
             tr.weekdays_bitmask, tr.max_participants
      FROM timeslot_rules tr
      WHERE tr.experience_id = ?`,
@@ -77,8 +77,6 @@ export const putTimeslotRule = async (conn = pool, id, data) => {
     if (!allowed.includes(key)) continue;
 
     let val = rawVal;
-
-    console.log(rawVal);
 
     setClauses.push(`${key} = ?`);
     params.push(val);

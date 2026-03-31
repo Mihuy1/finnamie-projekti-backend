@@ -71,7 +71,7 @@ export const getAllExperiencesWithHost = async () => {
       [expIds],
     ),
     pool.query(
-      `SELECT tr.id, tr.experience_id, tr.start_date, tr.end_date, tr.start_time,
+      `SELECT tr.id AS rule_id, tr.experience_id, tr.start_date, tr.end_date, tr.start_time,
               tr.end_time, tr.weekdays_bitmask, tr.max_participants
        FROM timeslot_rules tr
        WHERE tr.experience_id IN (?)`,

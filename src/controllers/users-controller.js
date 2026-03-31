@@ -18,7 +18,8 @@ import { deleteAllTimeslotsByHostId } from "../models/timeslot-model.js";
 
 const getUsers = async (req, res, next) => {
   try {
-    res.json(await listAllUsers());
+    const rows = await listAllUsers();
+    res.json(rows);
   } catch (error) {
     next(error);
   }
@@ -146,24 +147,23 @@ const putUser = async (req, res, next) => {
 
 const deleteUser = async (req, res, next) => {
   const { id } = req.params;
-  // const userId = req.user.id;
 
   try {
     const user = await getUserByIdModel(id);
-    if (!user) return res.status(404).json({ message: "No user found" });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (user.role === "host") {
-      const hostProfile = await getHostProfileUserId(id);
+    // if (user.role === "host") {
+    //   const hostProfile = await getHostProfileUserId(id);
 
-      if (hostProfile) {
-        await deleteHostActivity(hostProfile.host_profile_id);
-        await deleteAllTimeslotsByHostId(id);
-      }
-    }
+    //   if (hostProfile) {
+    //     await deleteHostActivity(hostProfile.host_profile_id);
+    //     await deleteAllTimeslotsByHostId(id);
+    //   }
+    // }
 
     await removeUser(id);
 
-    return res.status(202).json({ message: "User Deleted." });
+    return res.status(202).json({ message: "User deleted" });
   } catch (error) {
     next(error);
   }
