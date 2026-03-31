@@ -124,8 +124,6 @@ const register = async (req, res, next) => {
       gender,
     };
 
-    console.log("registeredUser:", registeredUser);
-
     const result = await addUser(registeredUser);
 
     if (role === "host") {

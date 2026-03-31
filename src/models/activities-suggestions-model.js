@@ -1,7 +1,9 @@
 import pool from "../utils/database.js";
 
 export const listAllActivitiesSuggestions = async () => {
-  const rows = await pool.query("SELECT * FROM activities_suggestions");
+  const rows = await pool.query(
+    "SELECT a.id, a.name, a.host_id, u.first_name, u.last_name FROM activities_suggestions a JOIN users u WHERE u.id = host_id ",
+  );
   return rows;
 };
 

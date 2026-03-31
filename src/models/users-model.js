@@ -2,7 +2,7 @@ import pool from "../utils/database.js";
 import { v4 as uuidv4 } from "uuid";
 
 const listAllUsers = async () => {
-  const rows = await pool.query("SELECT * FROM users");
+  const rows = await pool.query("SELECT * FROM users WHERE status = 'active'");
   return rows;
 };
 
@@ -152,7 +152,10 @@ const getUserByEmail = async (email) => {
 };
 
 const removeUser = async (id) => {
-  const rows = await pool.execute(`DELETE FROM users WHERE id = ?`, [id]);
+  const rows = await pool.execute(
+    `UPDATE users SET status = 'deleted', password = NULL WHERE id = ?`,
+    [id],
+  );
 
   return rows[0] ?? null;
 };
