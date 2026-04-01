@@ -13,6 +13,17 @@ export const getActivitiesByTimeslotId = async (timeslotId) => {
   );
 };
 
+export const getActivityUsageCount = async (activityId) => {
+  const sql = `
+              SELECT COUNT(*) AS usage_count
+              FROM timeslot_activities
+              WHERE activity_id = ?`;
+
+  const [rows] = await pool.query(sql, [activityId]);
+
+  return Number(rows?.usage_count ?? 0);
+};
+
 export const getActivitiesByExperienceId = async (
   experienceId,
   conn = pool,
