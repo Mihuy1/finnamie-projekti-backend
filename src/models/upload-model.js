@@ -24,11 +24,7 @@ export const uploadTimeSlotImagesExperience = async (conn = pool, urls) => {
 
   const q = `INSERT IGNORE INTO timeslot_images(url, experience_id) VALUES ${placeholders}`;
 
-  console.log("flatValues:", flatValues);
-
   const result = await conn.query(q, flatValues);
-
-  console.log("uploadTimeSlotImagesExperience result:", result);
 
   return result;
 };

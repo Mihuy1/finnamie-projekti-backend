@@ -24,6 +24,8 @@ export const getExperiencesByHostId = async (host_id) => {
     host_id,
   ]);
 
+  if (rows.length === 0) return rows;
+
   for (let exp of rows) {
     const activities = await pool.query(
       `SELECT a.id, a.name
@@ -186,6 +188,14 @@ export const removeExperience = async (host_id, experience_id) => {
     "DELETE FROM experiences WHERE id = ? AND host_id = ?",
     [experience_id, host_id],
   );
+
+  return rows;
+};
+
+export const removeExperienceById = async (experience_id) => {
+  const rows = await pool.execute("DELETE FROM experiences WHERE id = ?", [
+    experience_id,
+  ]);
 
   return rows;
 };

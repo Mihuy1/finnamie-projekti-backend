@@ -3,6 +3,7 @@ import {
   createNewActivityByName,
   getActivites,
   removeActivityById,
+  updateExperienceName,
 } from "../controllers/activities-controller.js";
 import { allowRoles, authorize } from "../middlewares.js";
 
@@ -14,6 +15,9 @@ activitiesRouter.use(authorize);
 
 activitiesRouter.route("/").post(allowRoles("admin"), createNewActivityByName);
 
-activitiesRouter.route("/:id").delete(allowRoles("admin"), removeActivityById);
+activitiesRouter
+  .route("/:id")
+  .put(allowRoles("admin"), updateExperienceName)
+  .delete(allowRoles("admin"), removeActivityById);
 
 export default activitiesRouter;

@@ -4,6 +4,7 @@ import {
   getExperiencesByHostId,
   insertExperience,
   putExperience,
+  removeExperienceById,
   removeExperience,
 } from "../models/experiences-model.js";
 import {
@@ -244,12 +245,23 @@ export const createExperience = async (req, res, next) => {
 };
 
 export const updateExperience = async (req, res, next) => {
-  const host_id = req.user.id;
+  let host_id = req.user.id;
   const { activity_ids, ...experienceData } = req.body;
   const { id } = req.params;
 
   let conn;
 
+  if (req.user.role === "admin") {
+    const exp = await pool.query(
+      "SELECT host_id FROM experiences WHERE id = ?",
+      [id],
+    );
+
+    if (exp.length === 0)
+      return res.status(404).json({ message: "Experience not found" });
+
+    host_id = exp[0].host_id;
+  }
   try {
     conn = await pool.getConnection();
     await conn.beginTransaction();
@@ -389,7 +401,10 @@ export const deleteExperienceById = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const rows = await removeExperience(host_id, id);
+    const rows =
+      req.user.role === "admin"
+        ? await removeExperienceById(id)
+        : await removeExperience(host_id, id);
 
     if (rows.affectedRows === 0)
       return res.status(404).json({ message: "Experience not found" });

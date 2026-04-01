@@ -28,8 +28,14 @@ experiencesRouter
 
 experiencesRouter
   .route("/host/:id")
-  .delete(allowRoles("host"), deleteExperienceById);
+  .delete(allowRoles("admin", "host"), deleteExperienceById);
 
-experiencesRouter.route("/:id").put(allowRoles("host"), upload.fields([{ name: "images", maxCount: 10 }]), updateExperience);
+experiencesRouter
+  .route("/:id")
+  .put(
+    allowRoles("admin", "host"),
+    upload.fields([{ name: "images", maxCount: 10 }]),
+    updateExperience,
+  );
 
 export default experiencesRouter;
