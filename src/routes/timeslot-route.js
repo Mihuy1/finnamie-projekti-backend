@@ -5,6 +5,7 @@ import {
   getAvailable,
   getTimeslot,
   getTimeslotById,
+  getTimeslotByRule,
   getTimeslotHistory,
   getTimeslotsByHostId,
   getTimeslotsWithHost,
@@ -17,6 +18,7 @@ const timeslotRouter = express.Router();
 timeslotRouter.route("/available").get(getAvailable); // tarkotuksella ennen .use(authorize)
 timeslotRouter.route("/availableWithHost").get(getTimeslotsWithHost);
 timeslotRouter.route("/host/:id").get(getTimeslotsByHostId);
+timeslotRouter.route("/rule/:ruleId").get(getTimeslotByRule);
 
 timeslotRouter.use(authorize);
 

@@ -9,6 +9,7 @@ import {
   timeslotHistory,
   updateTimeslot,
   getTimeslotsWithHost as getTimeslotsWithHostModel,
+  getTimeslotsByRuleId,
 } from "../models/timeslot-model.js";
 
 import { getTimeslotImageURLs } from "../models/upload-model.js";
@@ -151,6 +152,16 @@ const getTimeslotsWithHost = async (req, res, next) => {
   }
 };
 
+const getTimeslotByRule = async (req, res, next) => {
+  try {
+    const { ruleId } = req.params;
+
+    res.json(await getTimeslotsByRuleId(ruleId));
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   getTimeslot,
   getTimeslotById,
@@ -161,4 +172,5 @@ export {
   getTimeslotsByHostId,
   getAvailable,
   getTimeslotsWithHost,
+  getTimeslotByRule,
 };
