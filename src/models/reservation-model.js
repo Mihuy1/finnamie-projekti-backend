@@ -1,14 +1,20 @@
 import pool from "../utils/database.js";
 import { v4 as uuidv4 } from "uuid";
 
-export const reserveTimeslotModel = async (timeslotID, guestID) => {
+export const reserveTimeslotModel = async (
+  timeslotID,
+  guestID,
+  conn = pool,
+) => {
   // TODO:
   // estä varaus, jos timeslotti varattu jo
   // sähköposti hostille, kun joku varaa timeslotin?
   const q = `INSERT INTO reservations (id, guest_id, timeslot_id, booking_status)
                VALUES (?, ?, ?, 'reserved')`;
   const params = [uuidv4(), guestID, timeslotID];
-  await pool.execute(q, params);
+  const result = await conn.execute(q, params);
+
+  return result;
 };
 
 // hostille oma perumismahdollisuus?
