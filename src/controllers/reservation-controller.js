@@ -4,13 +4,54 @@ import {
   getReservationInformationModel,
   reserveTimeslotModel,
 } from "../models/reservation-model.js";
+import {
+  getTimeslotBookingCount,
+  increaseBookingCount,
+} from "../models/timeslot-model.js";
+import pool from "../utils/database.js";
 
 export const reserveTimeslot = async (req, res, next) => {
+  const timeslot_id = req.params.timeslot_id;
+  const user_id = req.user.id;
+  let conn;
   try {
-    await reserveTimeslotModel(req.params.timeslot_id, req.user.id);
+    conn = await pool.getConnection();
+
+    await conn.beginTransaction();
+
+    const bookingCount = await getTimeslotBookingCount(timeslot_id, conn);
+
+    if (
+      bookingCount.max_participants !== null &&
+      bookingCount.current_bookings >= bookingCount.max_participants
+    ) {
+      await conn.rollback();
+      return res.status(400).json({ message: "Timeslot is fully booked." });
+    }
+
+    const reservation = await reserveTimeslotModel(timeslot_id, user_id, conn);
+
+    if (reservation.affectedRows === 0) {
+      await conn.rollback();
+      return res.status(400).json({ message: "Failed to reserve timeslot." });
+    }
+
+    const increaseBookingResult = await increaseBookingCount(timeslot_id, conn);
+
+    if (increaseBookingResult.affectedRows === 0) {
+      await conn.rollback();
+      return res
+        .status(400)
+        .json({ message: "Failed to update booking count." });
+    }
+
+    await conn.commit();
+
     res.status(200).json({ message: "Timeslot reserved." });
   } catch (err) {
     next(err);
+  } finally {
+    if (conn) conn.release();
   }
 };
 

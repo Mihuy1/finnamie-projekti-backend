@@ -333,6 +333,24 @@ const getTimeslotsWithHost = async () => {
   return timeslots;
 };
 
+const getTimeslotBookingCount = async (timeslotId, conn = pool) => {
+  const q =
+    "SELECT current_bookings, max_participants FROM timeslot WHERE id = ?";
+
+  const rows = await conn.query(q, [timeslotId]);
+
+  console.log("rows in getTimeslotBookingCount:", rows);
+
+  return rows[0];
+};
+
+const increaseBookingCount = async (timeslot_id, conn = pool) => {
+  const q = `UPDATE timeslot SET current_bookings = current_bookings + 1 WHERE id = ? AND current_bookings < max_participants`;
+  const result = await conn.execute(q, [timeslot_id]);
+
+  return result;
+};
+
 export {
   listAllTimeslot,
   timeslotById,
@@ -346,4 +364,6 @@ export {
   getAvailableTimeslots,
   getTimeslotsWithHost,
   deleteAllTimeslotsByHostId,
+  getTimeslotBookingCount,
+  increaseBookingCount,
 };
