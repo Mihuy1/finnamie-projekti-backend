@@ -9,6 +9,7 @@ import {
   increaseBookingCount,
 } from "../models/timeslot-model.js";
 import pool from "../utils/database.js";
+import { updateReservationStatusByIdModel } from "../models/reservation-model.js";
 
 export const reserveTimeslot = async (req, res, next) => {
   const timeslot_id = req.params.timeslot_id;
@@ -31,6 +32,11 @@ export const reserveTimeslot = async (req, res, next) => {
 
     const reservation = await reserveTimeslotModel(timeslot_id, user_id, conn);
 
+    if (!reservation || !reservation.id) {
+      await conn.rollback();
+      return res.status(400).json({ message: "Failed to reserve timeslot." });
+    }
+
     if (reservation.affectedRows === 0) {
       await conn.rollback();
       return res.status(400).json({ message: "Failed to reserve timeslot." });
@@ -47,7 +53,10 @@ export const reserveTimeslot = async (req, res, next) => {
 
     await conn.commit();
 
-    res.status(200).json({ message: "Timeslot reserved." });
+    res.status(200).json({
+      message: "Timeslot reserved.",
+      id: reservation.id
+    });
   } catch (err) {
     next(err);
   } finally {
@@ -79,6 +88,22 @@ export const getReservationInformation = async (req, res, next) => {
     console.log(data);
     res.status(200).json(data);
   } catch (err) {
+    next(err);
+  }
+};
+
+export const updateStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { booking_status } = req.body;
+
+    console.log("DEBUG: Päivitetään varausta:", id, "tilaan:", booking_status);
+
+    const result = await updateReservationStatusByIdModel(id, booking_status);
+
+    res.status(200).json({ message: "Status updated" });
+  } catch (err) {
+    console.error("BACKEND ERROR:", err);
     next(err);
   }
 };

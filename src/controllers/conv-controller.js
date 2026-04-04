@@ -26,13 +26,20 @@ export const getConvsByUserId = async (req, res, next) => {
   }
 };
 
-export const postMessage = async (message) => {
+export const postMessage = async (req, res, next) => {
   try {
+    const { conv_id, receiver_id, content } = req.body;
+
     const data = await postMessageModel({
       id: uuidv4(),
-      ...message,
+      conv_id,
+      sender_id: req.user.id,
+      receiver_id,
+      content,
+      sent_at: new Date()
     });
-    return data;
+
+    res.status(201).json(data);
   } catch (err) {
     next(err);
   }

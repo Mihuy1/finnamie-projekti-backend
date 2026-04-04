@@ -5,6 +5,7 @@ import {
   getConvsByUserId,
   getMessagesByConvId,
   startConversation,
+  postMessage,
 } from "../controllers/conv-controller.js";
 
 const convRouter = express.Router();
@@ -12,6 +13,7 @@ const convRouter = express.Router();
 convRouter.use(authorize);
 
 convRouter.route("/").get(getConvsByUserId).post(startConversation);
+convRouter.route("/messages").post(postMessage);
 convRouter.route("/conv-id/:receiver_id").get(getConvId);
 convRouter.route("/:id").get(getMessagesByConvId);
 

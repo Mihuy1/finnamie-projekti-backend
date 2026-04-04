@@ -9,12 +9,15 @@ export const reserveTimeslotModel = async (
   // TODO:
   // estä varaus, jos timeslotti varattu jo
   // sähköposti hostille, kun joku varaa timeslotin?
+  const newReservationId = uuidv4(); // 1. Luodaan ID tässä
+
   const q = `INSERT INTO reservations (id, guest_id, timeslot_id, booking_status)
                VALUES (?, ?, ?, 'reserved')`;
-  const params = [uuidv4(), guestID, timeslotID];
-  const result = await conn.execute(q, params);
 
-  return result;
+  const params = [newReservationId, guestID, timeslotID];
+  await conn.execute(q, params);
+
+  return { id: newReservationId };
 };
 
 // hostille oma perumismahdollisuus?
@@ -56,19 +59,67 @@ export const confirmReservationModel = async (timeslotID, hostID) => {
 };
 
 export const getReservationInformationModel = async (guestID) => {
-  // pitää tehdä näin, koska useassa taulukoissa id sarake
+  const q = `
+    SELECT 
+      r.id AS reservation_id, 
+      r.booking_status, 
+      r.res_date,
+      t.id AS timeslot_id, 
+      t.start_time, 
+      t.end_time,
+      e.id AS experience_id,
+      e.title,                
+      e.city,                 
+      e.type AS experience_length,
+      u.first_name,           
+      u.last_name,
+      a.name AS category,      
+      img.url AS image_url     
+    FROM reservations r
+    INNER JOIN timeslot t ON r.timeslot_id = t.id
+    INNER JOIN experiences e ON t.experience_id = e.id
+    INNER JOIN users u ON e.host_id = u.id
+    LEFT JOIN activities a ON e.id = a.id  
+    LEFT JOIN (
+        SELECT experience_id, MIN(url) as url 
+        FROM timeslot_images 
+        GROUP BY experience_id
+    ) img ON e.id = img.experience_id
+    WHERE r.guest_id = ?
+    ORDER BY r.res_date DESC
+  `;
 
-  const q = `SELECT r.id AS reservation_id, r.guest_id, r.booking_status, r.res_date,
-             t.id AS timeslot_id, t.host_id, t.type, t.created_at, t.start_time, t.end_time, 
-             t.res_status, t.description, t.city, t.address, 
-             rev.content AS content, rev.score AS score, rev.id AS review_id
-             FROM reservations r
-             INNER JOIN timeslot t
-             ON r.timeslot_id = t.id
-             LEFT JOIN review rev
-             ON rev.res_id = r.id
-             WHERE r.guest_id = ?
-             ORDER BY r.res_date DESC`;
   const rows = await pool.execute(q, [guestID]);
   return rows;
+};
+
+export const updateReservationStatusByIdModel = async (reservationID, status) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    if (status === 'rejected') {
+      await conn.execute(`DELETE FROM reservations WHERE id = ?`, [reservationID]);
+    } else {
+      await conn.execute(
+        `UPDATE reservations SET booking_status = ? WHERE id = ?`,
+        [status, reservationID]
+      );
+    }
+
+    const newContent = status === 'confirmed' ? "ACCEPTED" : "DECLINED";
+
+    await conn.execute(
+      `UPDATE messages SET content = ? WHERE content LIKE ?`,
+      [newContent, `%ID:${reservationID}%`]
+    );
+
+    await conn.commit();
+    return { success: true };
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
 };
