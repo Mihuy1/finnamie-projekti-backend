@@ -42,8 +42,8 @@ export const cancelReservationModel = async (timeslotID, guestID) => {
 };
 
 export const confirmReservationModel = async (timeslotID, hostID) => {
-  // TODO:
   // sähköposti hostille, kun joku peruu timeslotin?
+
   // varmista, että hosti omistaa timeslotin
   const ownedTimeslots = await pool.execute(
     "SELECT id FROM timeslot WHERE host_id = ?",
@@ -93,26 +93,31 @@ export const getReservationInformationModel = async (guestID) => {
   return rows;
 };
 
-export const updateReservationStatusByIdModel = async (reservationID, status) => {
+export const updateReservationStatusByIdModel = async (
+  reservationID,
+  status,
+) => {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
 
-    if (status === 'rejected') {
-      await conn.execute(`DELETE FROM reservations WHERE id = ?`, [reservationID]);
+    if (status === "rejected") {
+      await conn.execute(`DELETE FROM reservations WHERE id = ?`, [
+        reservationID,
+      ]);
     } else {
       await conn.execute(
         `UPDATE reservations SET booking_status = ? WHERE id = ?`,
-        [status, reservationID]
+        [status, reservationID],
       );
     }
 
-    const newContent = status === 'confirmed' ? "ACCEPTED" : "DECLINED";
+    const newContent = status === "confirmed" ? "ACCEPTED" : "DECLINED";
 
-    await conn.execute(
-      `UPDATE messages SET content = ? WHERE content LIKE ?`,
-      [newContent, `%ID:${reservationID}%`]
-    );
+    await conn.execute(`UPDATE messages SET content = ? WHERE content LIKE ?`, [
+      newContent,
+      `%ID:${reservationID}%`,
+    ]);
 
     await conn.commit();
     return { success: true };

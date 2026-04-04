@@ -47,7 +47,6 @@ export const postMessage = async (req, res, next) => {
 
 export const startConversation = async (req, res, next) => {
   try {
-    console.log(req.body);
     const convID = await startConversationModel(req.user.id, req.body.receiver);
     res.status(200).json({ convesation_id: convID });
   } catch (err) {
