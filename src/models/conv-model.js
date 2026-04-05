@@ -22,18 +22,19 @@ export const getConvsByUserIdModel = async (id) => {
 
 export const postMessageModel = async (message) => {
   const { id, conv_id, sender_id, receiver_id, content } = message;
-  const q = `INSERT INTO messages(id, conv_id, sender_id, receiver_id, content)
-            VALUES(?, ?, ?, ?, ?)`;
+  const q = `INSERT INTO messages(id, conv_id, sender_id, receiver_id, content, is_read)
+            VALUES(?, ?, ?, ?, ?, 0)`;
   const params = [id, conv_id, sender_id, receiver_id, content];
+
   await pool.execute(q, params);
-  const rows = await pool.execute(
-    `
-  SELECT id, conv_id, sender_id, receiver_id, content, sent_at
-  FROM messages
-  WHERE id = ?
-  `,
-    [id],
+
+  const [rows] = await pool.execute(
+    `SELECT id, conv_id, sender_id, receiver_id, content, sent_at, is_read
+     FROM messages
+     WHERE id = ?`,
+    [id]
   );
+
   return rows[0];
 };
 
@@ -41,7 +42,7 @@ export const startConversationModel = async (sender_id, receiver_id) => {
   // Check if conversation already exists
   const existingConv = await getConversation(sender_id, receiver_id);
   if (existingConv) {
-    throw new Error("Conversations between users already exists.");
+    return existingConv.conv_id;
   }
   const conv_id = uuidv4();
   try {
@@ -61,4 +62,15 @@ export const getConversation = async (sender_id, receiver_id) => {
             ( ?, ?) GROUP BY conv_id HAVING COUNT(DISTINCT user_id) = 2`;
   const rows = await pool.execute(q, [sender_id, receiver_id]);
   return rows[0];
+};
+
+export const getUnreadCountModel = async (userId) => {
+  const q = `SELECT COUNT(*) AS count FROM messages WHERE receiver_id = ? AND is_read = 0`;
+  const rows = await pool.execute(q, [userId]);
+  return rows[0];
+};
+
+export const markMessagesAsReadModel = async (convId, userId) => {
+  const q = `UPDATE messages SET is_read = 1 WHERE conv_id = ? AND receiver_id = ? AND is_read = 0`;
+  await pool.execute(q, [convId, userId]);
 };

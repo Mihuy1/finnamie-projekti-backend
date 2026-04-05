@@ -27,7 +27,7 @@ export const reserveTimeslot = async (req, res, next) => {
       bookingCount.current_bookings >= bookingCount.max_participants
     ) {
       await conn.rollback();
-      return res.status(400).json({ message: "Timeslot is fully booked." });
+      return res.status(400).json({ message: "Overlapping reservation." });
     }
 
     const reservation = await reserveTimeslotModel(timeslot_id, user_id, conn);

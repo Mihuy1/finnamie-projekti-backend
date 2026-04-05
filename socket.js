@@ -1,12 +1,29 @@
 import { Server } from "socket.io";
 import { postMessage } from "./src/controllers/conv-controller.js";
 
-const postMessageHandler = (io) => async (msg) => {
+const postMessageHandler = (io, socket) => async (msg) => {
   try {
-    const postedMessage = await postMessage(msg);
-    io.to(msg.conv_id).emit("chat message", postedMessage);
+    const fakeReq = {
+      body: {
+        conv_id: msg.conv_id,
+        receiver_id: msg.receiver_id,
+        content: msg.content
+      },
+      user: { id: msg.sender_id }
+    };
+
+    const fakeRes = {
+      status: () => fakeRes,
+      json: (data) => data
+    };
+
+    const postedMessage = await postMessage(fakeReq, null, null);
+
+    if (postedMessage) {
+      io.to(msg.conv_id).emit("chat message", postedMessage);
+    }
   } catch (err) {
-    console.error(err);
+    console.error("Socket postMessage error:", err);
   }
 };
 
@@ -26,7 +43,7 @@ export const createSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
-    socket.on("chat message", postMessageHandler(io));
+    socket.on("chat message", postMessageHandler(io, socket));
     socket.on("join conversation", joinConversationHandler(socket));
     socket.on("leave conversation", leaveConversationHandler(socket));
   });

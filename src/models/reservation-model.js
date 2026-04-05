@@ -68,17 +68,24 @@ export const getReservationInformationModel = async (guestID) => {
       t.start_time, 
       t.end_time,
       e.id AS experience_id,
-      e.title,                
+      e.host_id,              
+      e.title,
+      e.description,         
+      e.address,             
       e.city,                 
       e.type AS experience_length,
       u.first_name,           
       u.last_name,
       a.name AS category,      
-      img.url AS image_url     
+      img.url AS image_url,
+      rev.id AS review_id,   
+      rev.score,            
+      rev.content         
     FROM reservations r
     INNER JOIN timeslot t ON r.timeslot_id = t.id
     INNER JOIN experiences e ON t.experience_id = e.id
-    INNER JOIN users u ON e.host_id = u.id
+    INNER JOIN users u ON e.host_id = u.id 
+    LEFT JOIN review rev ON r.id = rev.res_id 
     LEFT JOIN activities a ON e.id = a.id  
     LEFT JOIN (
         SELECT experience_id, MIN(url) as url 
