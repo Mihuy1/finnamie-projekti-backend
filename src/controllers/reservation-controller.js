@@ -7,10 +7,13 @@ import {
 import {
   getTimeslotBookingCount,
   increaseBookingCount,
+  timeslotById,
 } from "../models/timeslot-model.js";
 import pool from "../utils/database.js";
 import { updateReservationStatusByIdModel } from "../models/reservation-model.js";
 import { getUserIsVerifiedById } from "../models/users-model.js";
+import { getExperienceById } from "../models/experiences-model.js";
+import { sendBookingInformationEmail } from "../services/brevoService.js";
 
 export const reserveTimeslot = async (req, res, next) => {
   const timeslot_id = req.params.timeslot_id;
@@ -22,6 +25,19 @@ export const reserveTimeslot = async (req, res, next) => {
     await conn.beginTransaction();
 
     const is_verified = await getUserIsVerifiedById(user_id);
+    const timeslot = await timeslotById(timeslot_id);
+
+    if (!timeslot) {
+      await conn.rollback();
+      return res.status(404).json({ message: "Timeslot not found." });
+    }
+
+    const experience = await getExperienceById(timeslot[0].experience_id);
+
+    if ((!experience, !experience[0])) {
+      await conn.rollback();
+      return res.status(404).json({ message: "Experience not found." });
+    }
 
     if (!is_verified) {
       await conn.rollback();
@@ -60,6 +76,8 @@ export const reserveTimeslot = async (req, res, next) => {
         .status(400)
         .json({ message: "Failed to update booking count." });
     }
+
+    sendBookingInformationEmail(req.user.email, timeslot[0], experience[0]);
 
     await conn.commit();
 

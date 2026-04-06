@@ -6,6 +6,7 @@ import {
   getUserProfileInfoById,
   getVerificationTokenByEmail,
   modifyUser,
+  getUserIsVerifiedById,
 } from "../models/users-model.js";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
@@ -50,6 +51,7 @@ const postLogin = async (req, res, next) => {
       id: user.id?.toString?.() ?? String(user.id),
       first_name: user.first_name,
       last_name: user.last_name,
+      email: user.email,
       role: user.role,
       is_verified: user.is_verified,
     };
@@ -318,11 +320,45 @@ const getProfileInfo = async (req, res, next) => {
   }
 };
 
-const getMe = async (req, res) => {
-  res.status(200).json({
-    user: req.user,
-    message: "Session is active",
-  });
+const getMe = async (req, res, next) => {
+  try {
+    const isVerified = await getUserIsVerifiedById(req.user.id);
+    let userToReturn = req.user;
+
+    // Check if the database value differs from the JWT payload
+    if (!!isVerified !== !!req.user.is_verified) {
+      userToReturn = { ...req.user, is_verified: isVerified ? 1 : 0 };
+
+      const userWithoutPass = {
+        id: userToReturn.id,
+        first_name: userToReturn.first_name,
+        last_name: userToReturn.last_name,
+        email: userToReturn.email,
+        role: userToReturn.role,
+        is_verified: userToReturn.is_verified,
+      };
+
+      if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is missing!");
+
+      const token = jwt.sign(userWithoutPass, process.env.JWT_SECRET, {
+        expiresIn: "2h",
+      });
+
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "Strict",
+        maxAge: 7200000,
+      });
+    }
+
+    res.status(200).json({
+      user: userToReturn,
+      message: "Session is active",
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 const logout = async (req, res) => {

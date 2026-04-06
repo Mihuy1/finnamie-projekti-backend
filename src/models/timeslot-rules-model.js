@@ -9,6 +9,14 @@ export const getTimeslotRuleByHostId = async (host_id) => {
   return rows;
 };
 
+export const getTimeslotRuleById = async (id) => {
+  const rows = await pool.query("SELECT * FROM timeslot_rules WHERE id = ?", [
+    id,
+  ]);
+
+  return rows[0] ?? null;
+};
+
 export const getTimeslotRuleByExperienceId = async (experience_id) => {
   const rows = await pool.query(
     "SELECT * FROM timeslot_rules where experience_id = ?",
