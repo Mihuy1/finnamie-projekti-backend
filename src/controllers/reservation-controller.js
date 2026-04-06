@@ -10,6 +10,7 @@ import {
 } from "../models/timeslot-model.js";
 import pool from "../utils/database.js";
 import { updateReservationStatusByIdModel } from "../models/reservation-model.js";
+import { getUserIsVerifiedById } from "../models/users-model.js";
 
 export const reserveTimeslot = async (req, res, next) => {
   const timeslot_id = req.params.timeslot_id;
@@ -19,6 +20,15 @@ export const reserveTimeslot = async (req, res, next) => {
     conn = await pool.getConnection();
 
     await conn.beginTransaction();
+
+    const is_verified = await getUserIsVerifiedById(user_id);
+
+    if (!is_verified) {
+      await conn.rollback();
+      return res
+        .status(403)
+        .json({ message: "Email not verified. Please verify your email." });
+    }
 
     const bookingCount = await getTimeslotBookingCount(timeslot_id, conn);
 
@@ -55,7 +65,7 @@ export const reserveTimeslot = async (req, res, next) => {
 
     res.status(200).json({
       message: "Timeslot reserved.",
-      id: reservation.id
+      id: reservation.id,
     });
   } catch (err) {
     next(err);

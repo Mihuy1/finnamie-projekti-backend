@@ -48,12 +48,13 @@ const addUser = async (user) => {
     date_of_birth,
     gender,
     image_url,
+    verification_token,
   } = user;
 
   if (!id) id = uuidv4();
 
-  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, country, date_of_birth, gender, image_url) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const sql = `INSERT INTO users (id, first_name, last_name, email, password, role, country, date_of_birth, gender, image_url, verification_token) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   const params = [
     id,
     first_name,
@@ -65,6 +66,7 @@ const addUser = async (user) => {
     date_of_birth,
     gender,
     image_url,
+    verification_token,
   ].map((value) => value ?? null);
 
   const rows = await pool.execute(sql, params);
@@ -146,6 +148,32 @@ const modifyUser = async (id, user) => {
   };
 };
 
+const confirmUserEmail = async (token) => {
+  const sql = `UPDATE users SET is_verified = true, verification_token = null WHERE verification_token = ?`;
+  const result = await pool.execute(sql, [token]);
+  return result.affectedRows;
+};
+
+const getUserIsVerifiedById = async (id) => {
+  const sql = `SELECT is_verified FROM users WHERE id = ?`;
+  const rows = await pool.query(sql, [id]);
+  return rows[0]?.is_verified ?? false;
+};
+
+const getVerificationTokenByEmail = async (email) => {
+  const sql = `SELECT verification_token FROM users WHERE email = ?`;
+
+  const rows = await pool.query(sql, [email]);
+
+  return rows[0]?.verification_token ?? null;
+};
+
+const getUserByVerificationToken = async (token) => {
+  const sql = `SELECT id, first_name, last_name, role, is_verified FROM users WHERE verification_token = ?`;
+  const rows = await pool.query(sql, [token]);
+  return rows[0] ?? null;
+};
+
 const getUserByEmail = async (email) => {
   const rows = await pool.query(`SELECT * FROM users WHERE email = ?`, [email]);
   return rows[0] ?? null;
@@ -167,7 +195,11 @@ export {
   addUser,
   getUserByEmail,
   modifyUser,
+  confirmUserEmail,
+  getVerificationTokenByEmail,
+  getUserByVerificationToken,
   getUserImageById,
   getUserProfileInfoById,
   removeUser,
+  getUserIsVerifiedById,
 };

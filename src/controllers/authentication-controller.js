@@ -1,7 +1,10 @@
 import {
   addUser,
+  confirmUserEmail,
   getUserByEmail,
+  getUserByVerificationToken,
   getUserProfileInfoById,
+  getVerificationTokenByEmail,
   modifyUser,
 } from "../models/users-model.js";
 import argon2 from "argon2";
@@ -16,6 +19,9 @@ import {
   setHostActivitiesByUserId,
 } from "../models/host-activities-model.js";
 import isEmail from "validator/lib/isEmail.js";
+
+import crypto from "crypto";
+import { sendVerificationEmail } from "../services/brevoService.js";
 
 const postLogin = async (req, res, next) => {
   try {
@@ -45,6 +51,7 @@ const postLogin = async (req, res, next) => {
       first_name: user.first_name,
       last_name: user.last_name,
       role: user.role,
+      is_verified: user.is_verified,
     };
 
     if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is missing!");
@@ -108,6 +115,8 @@ const register = async (req, res, next) => {
     if (password !== confirmPassword)
       return res.status(400).json({ message: "Passwords do not match!" });
 
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
     const hashedPassword = await argon2.hash(password);
 
     if (!isEmail(email))
@@ -122,6 +131,7 @@ const register = async (req, res, next) => {
       country,
       date_of_birth,
       gender,
+      verification_token: verificationToken,
     };
 
     const result = await addUser(registeredUser);
@@ -142,13 +152,64 @@ const register = async (req, res, next) => {
         await setHostActivitiesByUserId(result.id, activity_ids);
     }
 
-    res
-      .status(200)
-      .json({ message: "Registration successful!", userId: result.id });
+    sendVerificationEmail(email, verificationToken);
+
+    res.status(200).json({
+      message: "Registration successful! Please verify your email address.",
+      userId: result.id,
+    });
   } catch (error) {
-    res.status(400).json({ message: "something went wrong:", error });
+    res.status(400).json({ message: "Something went wrong:", error });
     console.error("Error:", error);
     next(error);
+  }
+};
+
+const resendVerificationEmail = async (req, res, next) => {
+  const { email } = req.params;
+  try {
+    const token = await getVerificationTokenByEmail(email);
+
+    if (!token)
+      return res
+        .status(404)
+        .json({ message: "User not found or already verified." });
+
+    await sendVerificationEmail(email, token);
+
+    res
+      .status(200)
+      .json({ message: "Verification email resent successfully!" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const verifyEmail = async (req, res, next) => {
+  const { token } = req.query;
+
+  if (!token)
+    return res.status(400).json({ message: "Verification token is missing." });
+
+  try {
+    const userByToken = await getUserByVerificationToken(token);
+
+    if (!userByToken)
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired verification token." });
+
+    const wasUpdated = await confirmUserEmail(token);
+
+    if (wasUpdated === 0) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired verification token." });
+    }
+
+    res.status(200).json({ message: "Email verified successfully!" });
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -275,4 +336,13 @@ const logout = async (req, res) => {
   return res.status(200).json({ message: "Logged out" });
 };
 
-export { postLogin, register, updateProfile, getProfileInfo, getMe, logout };
+export {
+  postLogin,
+  register,
+  verifyEmail,
+  resendVerificationEmail,
+  updateProfile,
+  getProfileInfo,
+  getMe,
+  logout,
+};
