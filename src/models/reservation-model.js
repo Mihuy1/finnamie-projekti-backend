@@ -135,3 +135,15 @@ export const updateReservationStatusByIdModel = async (
     conn.release();
   }
 };
+
+export const getReservationPrice = async (type) => {
+  const query = "SELECT price_id FROM prices WHERE type = ?";
+  const rows = await pool.execute(query, type);
+  return rows[0];
+};
+
+export const setPaymentCompleted = async (res_id) => {
+  const query = "UPDATE reservations SET payment_received = TRUE WHERE id = ?";
+  const rows = await pool.execute(query, res_id);
+  console.log(rows);
+};

@@ -3,6 +3,7 @@ import {
   confirmReservationModel,
   getReservationInformationModel,
   reserveTimeslotModel,
+  setPaymentCompleted,
 } from "../models/reservation-model.js";
 import {
   getTimeslotBookingCount,
@@ -55,7 +56,7 @@ export const reserveTimeslot = async (req, res, next) => {
 
     res.status(200).json({
       message: "Timeslot reserved.",
-      id: reservation.id
+      id: reservation.id,
     });
   } catch (err) {
     next(err);
@@ -105,5 +106,15 @@ export const updateStatus = async (req, res, next) => {
   } catch (err) {
     console.error("BACKEND ERROR:", err);
     next(err);
+  }
+};
+
+export const reservationPaid = async (req, res, next) => {
+  try {
+    const { res_id } = req.body;
+    await setPaymentCompleted(res_id);
+    res.status(200).json({ message: "Payment completed." });
+  } catch (e) {
+    next(e);
   }
 };

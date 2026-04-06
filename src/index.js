@@ -10,6 +10,7 @@ import activitiesSuggestionsRoute from "./routes/activities-suggestions-route.js
 import reservationRouter from "./routes/reservation-route.js";
 import timeslotRulesRouter from "./routes/timeslot-rules-route.js";
 import experiencesRouter from "./routes/experiences-route.js";
+import stripeRouter from "./routes/stripe-route.js";
 
 const router = express.Router();
 
@@ -24,5 +25,6 @@ router.use("/activities", activitiesRouter);
 router.use("/activities/suggestions", activitiesSuggestionsRoute);
 router.use("/reservations", reservationRouter);
 router.use("/experiences", experiencesRouter);
+router.use("/stripe/", stripeRouter);
 
 export default router;
