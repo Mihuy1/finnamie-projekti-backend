@@ -3,6 +3,7 @@ import {
   confirmReservationModel,
   getReservationInformationModel,
   reserveTimeslotModel,
+  getReservationsForHostModel,
 } from "../models/reservation-model.js";
 import {
   getTimeslotBookingCount,
@@ -91,10 +92,17 @@ export const reserveTimeslot = async (req, res, next) => {
     if (conn) conn.release();
   }
 };
-
 export const cancelReservation = async (req, res, next) => {
   try {
-    await cancelReservationModel(req.params.timeslot_id, req.user.id);
+    const { timeslot_id } = req.params;
+    const userID = req.user.id;
+
+    if (!timeslot_id || timeslot_id === 'undefined') {
+      return res.status(400).json({ message: "ID is missing" });
+    }
+
+    await cancelReservationModel(timeslot_id, userID);
+
     res.status(200).json({ message: "Reservation cancelled." });
   } catch (err) {
     next(err);
@@ -112,8 +120,18 @@ export const confirmTimeslot = async (req, res, next) => {
 
 export const getReservationInformation = async (req, res, next) => {
   try {
-    const data = await getReservationInformationModel(req.user.id);
-    console.log(data);
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    let data;
+
+    if (userRole === "host") {
+      data = await getReservationsForHostModel(userId);
+    } else {
+      data = await getReservationInformationModel(userId);
+    }
+
+    console.log(`Fetch reservations for ${userRole}:`, data);
     res.status(200).json(data);
   } catch (err) {
     next(err);
