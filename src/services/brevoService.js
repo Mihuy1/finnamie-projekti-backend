@@ -1,6 +1,13 @@
 async function sendVerificationEmail(userEmail, token) {
   const verificationLink = `http://localhost:3000/api/auth/verify?token=${token}`;
 
+  if (!process.env.BREVO_API_KEY) {
+    console.warn(
+      "Brevo API key is not set. Skipping email sending for verification.",
+    );
+    return;
+  }
+
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
@@ -39,11 +46,12 @@ async function sendBookingInformationEmail(
   timeslotDetails,
   experieenceDetails,
 ) {
-  console.log("details passed:", {
-    userEmail,
-    timeslotDetails,
-    experieenceDetails,
-  });
+  if (!process.env.BREVO_API_KEY) {
+    console.warn(
+      "Brevo API key is not set. Skipping email sending for booking information.",
+    );
+    return;
+  }
 
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
