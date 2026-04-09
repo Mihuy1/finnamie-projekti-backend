@@ -15,10 +15,7 @@ const getPriceFromDashboard = async (priceId) => {
   return price;
 };
 
-export const createCheckoutSession = async (
-  priceId,
-  email = "test+location_GB@example.com",
-) => {
+export const createCheckoutSession = async (priceId, email) => {
   const params = {
     ...(email && { customer_email: email }),
     line_items: [
@@ -36,7 +33,7 @@ export const createCheckoutSession = async (
     ],
     mode: "payment",
     success_url: `${process.env.FRONTEND_BASE_URL}success/`,
-    cancel_url: `${process.env.FRONTEND_BASE_URL}cancel/`,
+    cancel_url: `${process.env.FRONTEND_BASE_URL}profile/`,
   };
   const session = await stripe.checkout.sessions.create(params);
   return session.url;
