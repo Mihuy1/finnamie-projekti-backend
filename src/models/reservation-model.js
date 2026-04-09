@@ -20,24 +20,22 @@ export const reserveTimeslotModel = async (
   return { id: newReservationId };
 };
 
-// hostille oma perumismahdollisuus?
-export const cancelReservationModel = async (timeslotID, guestID) => {
+export const cancelReservationModel = async (id, userID) => {
   try {
-    const savedGuestID = await pool.execute(
-      `SELECT guest_id FROM reservations WHERE timeslot_id = ?`,
-      [timeslotID],
+    await pool.execute(
+      `SELECT guest_id FROM reservations WHERE id = ?`,
+      [id]
     );
-    if (savedGuestID.length === 0) throw new Error("Invalid timeslot_id.");
-    if (guestID === savedGuestID[0].guest_id) {
-      await pool.execute(
-        `UPDATE reservations SET booking_status = 'cancelled' WHERE timeslot_id = ?`,
-        [timeslotID],
-      );
-      return;
-    }
-    throw new Error("The guest does not own this reservation.");
+
+    await pool.execute(
+      `UPDATE reservations SET booking_status = 'cancelled' WHERE id = ?`,
+      [id]
+    );
+
+    return { success: true };
   } catch (err) {
-    throw new Error(err.message);
+    console.error("VIRHE MODELISSA:", err.message);
+    throw err;
   }
 };
 
@@ -79,8 +77,15 @@ export const getReservationInformationModel = async (guestID) => {
       a.name AS category,      
       img.url AS image_url,
       rev.id AS review_id,   
-      rev.score,            
-      rev.content         
+      rev.score,           
+      rev.content,
+      (
+        SELECT cj1.conv_id 
+        FROM conversation_join cj1
+        JOIN conversation_join cj2 ON cj1.conv_id = cj2.conv_id
+        WHERE cj1.user_id = r.guest_id AND cj2.user_id = e.host_id
+        LIMIT 1
+      ) AS conv_id          
     FROM reservations r
     INNER JOIN timeslot t ON r.timeslot_id = t.id
     INNER JOIN experiences e ON t.experience_id = e.id
@@ -97,6 +102,48 @@ export const getReservationInformationModel = async (guestID) => {
   `;
 
   const rows = await pool.execute(q, [guestID]);
+  return rows;
+};
+
+export const getReservationsForHostModel = async (hostID) => {
+  const q = `
+    SELECT 
+      r.id AS reservation_id, 
+      r.booking_status, 
+      r.res_date,
+      r.guest_id,
+      t.id AS timeslot_id, 
+      t.start_time, 
+      t.end_time,
+      e.id AS experience_id,
+      e.host_id,              
+      e.title,
+      e.description,         
+      e.address,             
+      e.city,                 
+      e.type AS experience_length,
+      guest.first_name,           
+      guest.last_name,
+      rev.id AS review_id,   
+      rev.score,            
+      rev.content,
+      (
+        SELECT cj1.conv_id 
+        FROM conversation_join cj1
+        JOIN conversation_join cj2 ON cj1.conv_id = cj2.conv_id
+        WHERE cj1.user_id = r.guest_id AND cj2.user_id = e.host_id
+        LIMIT 1
+      ) AS conv_id         
+    FROM reservations r
+    INNER JOIN timeslot t ON r.timeslot_id = t.id
+    INNER JOIN experiences e ON t.experience_id = e.id
+    INNER JOIN users guest ON r.guest_id = guest.id
+    LEFT JOIN review rev ON r.id = rev.res_id 
+    WHERE e.host_id = ? 
+    ORDER BY r.res_date DESC
+  `;
+
+  const rows = await pool.execute(q, [hostID]);
   return rows;
 };
 

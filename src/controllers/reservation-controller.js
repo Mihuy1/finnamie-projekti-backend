@@ -3,14 +3,19 @@ import {
   confirmReservationModel,
   getReservationInformationModel,
   reserveTimeslotModel,
+  getReservationsForHostModel,
   setPaymentCompleted,
 } from "../models/reservation-model.js";
 import {
   getTimeslotBookingCount,
   increaseBookingCount,
+  timeslotById,
 } from "../models/timeslot-model.js";
 import pool from "../utils/database.js";
 import { updateReservationStatusByIdModel } from "../models/reservation-model.js";
+import { getUserIsVerifiedById } from "../models/users-model.js";
+import { getExperienceById } from "../models/experiences-model.js";
+import { sendBookingInformationEmail } from "../services/brevoService.js";
 
 export const reserveTimeslot = async (req, res, next) => {
   const timeslot_id = req.params.timeslot_id;
@@ -20,6 +25,28 @@ export const reserveTimeslot = async (req, res, next) => {
     conn = await pool.getConnection();
 
     await conn.beginTransaction();
+
+    const is_verified = await getUserIsVerifiedById(user_id);
+    const timeslot = await timeslotById(timeslot_id);
+
+    if (!timeslot) {
+      await conn.rollback();
+      return res.status(404).json({ message: "Timeslot not found." });
+    }
+
+    const experience = await getExperienceById(timeslot[0].experience_id);
+
+    if ((!experience, !experience[0])) {
+      await conn.rollback();
+      return res.status(404).json({ message: "Experience not found." });
+    }
+
+    if (!is_verified) {
+      await conn.rollback();
+      return res
+        .status(403)
+        .json({ message: "Email not verified. Please verify your email." });
+    }
 
     const bookingCount = await getTimeslotBookingCount(timeslot_id, conn);
 
@@ -52,6 +79,8 @@ export const reserveTimeslot = async (req, res, next) => {
         .json({ message: "Failed to update booking count." });
     }
 
+    sendBookingInformationEmail(req.user.email, timeslot[0], experience[0]);
+
     await conn.commit();
 
     res.status(200).json({
@@ -64,10 +93,17 @@ export const reserveTimeslot = async (req, res, next) => {
     if (conn) conn.release();
   }
 };
-
 export const cancelReservation = async (req, res, next) => {
   try {
-    await cancelReservationModel(req.params.timeslot_id, req.user.id);
+    const { timeslot_id } = req.params;
+    const userID = req.user.id;
+
+    if (!timeslot_id || timeslot_id === "undefined") {
+      return res.status(400).json({ message: "ID is missing" });
+    }
+
+    await cancelReservationModel(timeslot_id, userID);
+
     res.status(200).json({ message: "Reservation cancelled." });
   } catch (err) {
     next(err);
@@ -85,8 +121,18 @@ export const confirmTimeslot = async (req, res, next) => {
 
 export const getReservationInformation = async (req, res, next) => {
   try {
-    const data = await getReservationInformationModel(req.user.id);
-    console.log(data);
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    let data;
+
+    if (userRole === "host") {
+      data = await getReservationsForHostModel(userId);
+    } else {
+      data = await getReservationInformationModel(userId);
+    }
+
+    console.log(`Fetch reservations for ${userRole}:`, data);
     res.status(200).json(data);
   } catch (err) {
     next(err);
