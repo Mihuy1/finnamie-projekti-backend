@@ -22,14 +22,11 @@ export const reserveTimeslotModel = async (
 
 export const cancelReservationModel = async (id, userID) => {
   try {
-    await pool.execute(
-      `SELECT guest_id FROM reservations WHERE id = ?`,
-      [id]
-    );
+    await pool.execute(`SELECT guest_id FROM reservations WHERE id = ?`, [id]);
 
     await pool.execute(
       `UPDATE reservations SET booking_status = 'cancelled' WHERE id = ?`,
-      [id]
+      [id],
     );
 
     return { success: true };

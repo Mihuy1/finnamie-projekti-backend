@@ -37,7 +37,7 @@ timeslotRouter
   .put(allowRoles("host", "admin"), updateExistingTimeslot);
 
 timeslotRouter
-  .route("/timeslotExperience/:id")
+  .route("/timeslotWithExperience/:id")
   .get(allowRoles("host", "admin"), getTimeslotAndExperienceByTimeslotId);
 
 export default timeslotRouter;

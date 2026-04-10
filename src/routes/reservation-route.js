@@ -5,7 +5,7 @@ import {
   confirmTimeslot,
   getReservationInformation,
   reserveTimeslot,
-  updateStatus, // 
+  updateStatus, //
 } from "../controllers/reservation-controller.js";
 
 const reservationRouter = express.Router();

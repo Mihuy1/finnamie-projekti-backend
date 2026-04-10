@@ -95,14 +95,14 @@ export const reserveTimeslot = async (req, res, next) => {
 };
 export const cancelReservation = async (req, res, next) => {
   try {
-    const { timeslot_id } = req.params;
+    const { timeslot_id: reservation_id } = req.params;
     const userID = req.user.id;
 
-    if (!timeslot_id || timeslot_id === "undefined") {
+    if (!reservation_id || reservation_id === "undefined") {
       return res.status(400).json({ message: "ID is missing" });
     }
 
-    await cancelReservationModel(timeslot_id, userID);
+    await cancelReservationModel(reservation_id, userID);
 
     res.status(200).json({ message: "Reservation cancelled." });
   } catch (err) {
