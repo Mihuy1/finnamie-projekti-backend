@@ -7,6 +7,7 @@ import {
   getVerificationTokenByEmail,
   modifyUser,
   getUserIsVerifiedById,
+  getUserByIdModel,
 } from "../models/users-model.js";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
@@ -240,6 +241,8 @@ const updateProfile = async (req, res, next) => {
 
     let hashedPassword;
 
+    const user = await getUserByIdModel(id);
+
     if (password) {
       if (!confirmPassword)
         return res
@@ -252,9 +255,12 @@ const updateProfile = async (req, res, next) => {
       hashedPassword = await argon2.hash(password);
     }
 
-    if (email)
+    if (email && email !== user.email) {
       if (!isEmail(email))
         return res.status(400).json({ message: "Please enter a valid email!" });
+      if (await getUserByEmail(email))
+        return res.status(409).json({ message: "Email already in use." });
+    }
 
     const updatedUser = {
       first_name,

@@ -351,6 +351,14 @@ const increaseBookingCount = async (timeslot_id, conn = pool) => {
   return result;
 };
 
+const getTimeslotByIdWithExperience = async (timeslot_id, conn = pool) => {
+  const q = `SELECT e.title, e.description, e.city, JSON_ARRAYAGG(
+      JSON_OBJECT('url', ti.url)
+    ) AS images FROM timeslot t JOIN experiences e ON t.experience_id = e.id LEFT JOIN timeslot_images ti ON e.id = ti.experience_id WHERE t.id = ?`;
+  const result = await conn.query(q, [timeslot_id]);
+  return result[0];
+};
+
 export {
   listAllTimeslot,
   timeslotById,
@@ -366,4 +374,5 @@ export {
   deleteAllTimeslotsByHostId,
   getTimeslotBookingCount,
   increaseBookingCount,
+  getTimeslotByIdWithExperience,
 };

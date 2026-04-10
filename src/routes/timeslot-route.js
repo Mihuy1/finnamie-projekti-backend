@@ -4,6 +4,7 @@ import {
   deleteExistingTimeslot,
   getAvailable,
   getTimeslot,
+  getTimeslotAndExperienceByTimeslotId,
   getTimeslotById,
   getTimeslotByRule,
   getTimeslotHistory,
@@ -34,5 +35,9 @@ timeslotRouter
   .get(getTimeslotById)
   .delete(allowRoles("host", "admin"), deleteExistingTimeslot)
   .put(allowRoles("host", "admin"), updateExistingTimeslot);
+
+timeslotRouter
+  .route("/timeslotExperience/:id")
+  .get(allowRoles("host", "admin"), getTimeslotAndExperienceByTimeslotId);
 
 export default timeslotRouter;
