@@ -2,6 +2,7 @@ import express from "express";
 import { authorize } from "../middlewares.js";
 import {
   cancelReservation,
+  confirmReservation,
   confirmTimeslot,
   getReservationInformation,
   reserveTimeslot,
@@ -22,5 +23,6 @@ reservationRouter
   .put(confirmTimeslot);
 
 reservationRouter.route("/cancel/:timeslot_id").put(cancelReservation);
+reservationRouter.route("/confirm/:reservation_id").put(confirmReservation);
 
 export default reservationRouter;

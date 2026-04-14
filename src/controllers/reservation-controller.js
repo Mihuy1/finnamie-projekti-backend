@@ -13,9 +13,15 @@ import {
 } from "../models/timeslot-model.js";
 import pool from "../utils/database.js";
 import { updateReservationStatusByIdModel } from "../models/reservation-model.js";
-import { getUserIsVerifiedById } from "../models/users-model.js";
+import {
+  getUserByIdModel,
+  getUserIsVerifiedById,
+} from "../models/users-model.js";
 import { getExperienceById } from "../models/experiences-model.js";
-import { sendBookingInformationEmail } from "../services/brevoService.js";
+import {
+  sendBookingInformationEmail,
+  sendBookingNotificationToHost,
+} from "../services/brevoService.js";
 
 export const reserveTimeslot = async (req, res, next) => {
   const timeslot_id = req.params.timeslot_id;
@@ -28,6 +34,10 @@ export const reserveTimeslot = async (req, res, next) => {
 
     const is_verified = await getUserIsVerifiedById(user_id);
     const timeslot = await timeslotById(timeslot_id);
+    const host = await getUserByIdModel(timeslot[0].host_id);
+
+    console.log("req.user.email:", req.user.email);
+    console.log("host email:", host.email);
 
     if (!timeslot) {
       await conn.rollback();
@@ -80,6 +90,12 @@ export const reserveTimeslot = async (req, res, next) => {
     }
 
     sendBookingInformationEmail(req.user.email, timeslot[0], experience[0]);
+    sendBookingNotificationToHost(
+      host.email,
+      req.user,
+      timeslot[0],
+      experience[0],
+    );
 
     await conn.commit();
 
@@ -108,6 +124,30 @@ export const cancelReservation = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+export const confirmReservation = async (req, res, next) => {
+  const { reservation_id } = req.params;
+  const userID = req.user.id;
+
+  console.log(
+    "this was called, userID:",
+    userID,
+    "reservation_id:",
+    reservation_id,
+  );
+
+  if (!reservation_id || reservation_id === "undefined")
+    return res.status(400).status({ message: "reservation_id is missing" });
+
+  const response = await confirmReservationModel(reservation_id, userID);
+
+  if (response.affectedRows === 0)
+    return res
+      .status(400)
+      .json({ message: "Reservation not found, could not confirm" });
+
+  res.status(200).json({ message: "Reservation confirmed." });
 };
 
 export const confirmTimeslot = async (req, res, next) => {

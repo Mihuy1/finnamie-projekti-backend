@@ -53,6 +53,13 @@ async function sendBookingInformationEmail(
     return;
   }
 
+  if (!userEmail) {
+    console.warn(
+      "Email missing. Skipping email sending for booking information",
+    );
+    return;
+  }
+
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
@@ -96,4 +103,75 @@ async function sendBookingInformationEmail(
   }
 }
 
-export { sendVerificationEmail, sendBookingInformationEmail };
+async function sendBookingNotificationToHost(
+  hostEmail,
+  user,
+  timeslotDetails,
+  experieenceDetails,
+) {
+  if (!process.env.BREVO_API_KEY) {
+    console.warn(
+      "Brevo API key is not set. Skipping email sending for booking information.",
+    );
+    return;
+  }
+
+  if (!hostEmail) {
+    console.warn("Email missing. Skipping email sending for host booking info");
+    return;
+  }
+
+  const bookerName =
+    [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
+    user?.name ||
+    "a guest";
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "api-key": process.env.BREVO_API_KEY,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      sender: {
+        name: "Finnamie",
+        email: "fizhey@gmail.com", // Must be an authenticated sender in Brevo
+      },
+      to: [{ email: hostEmail }],
+      subject: `You have a new booking from ${bookerName}!`,
+      htmlContent: `
+        <html>
+          <body>
+            <h2>New Booking!</h2>
+            <p>You have a new booking from <strong>${bookerName}</strong> for your experience <strong>${experieenceDetails.title}</strong>.</p>
+            <p>Here are the details of the booking:</p>
+            <ul>
+              <li><strong>Experience:</strong> ${experieenceDetails.title}</li>
+              <li><strong>Timeslot:</strong> ${new Date(
+                timeslotDetails.start_time,
+              ).toLocaleString()} - ${new Date(
+                timeslotDetails.end_time,
+              ).toLocaleString()}</li>
+              <li><strong>Location:</strong> ${experieenceDetails.city}</li>
+              <li><strong>Address:</strong> ${experieenceDetails.address}</li>
+              <li><strong>Description:</strong> ${experieenceDetails.description}</li>
+            </ul>
+          </body>
+        </html>
+      `,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Failed to send email via Brevo:", errorData);
+    throw new Error("Email sending failed");
+  }
+}
+
+export {
+  sendVerificationEmail,
+  sendBookingInformationEmail,
+  sendBookingNotificationToHost,
+};

@@ -171,8 +171,6 @@ const getTimeslotAndExperienceByTimeslotId = async (req, res, next) => {
 
     if (!result) return res.status(404).json({ message: "Timeslot not found" });
 
-    console.log("okay?");
-
     return res.json(result);
   } catch (error) {
     next(error);

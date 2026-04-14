@@ -36,21 +36,26 @@ export const cancelReservationModel = async (id, userID) => {
   }
 };
 
-export const confirmReservationModel = async (timeslotID, hostID) => {
-  // sähköposti hostille, kun joku peruu timeslotin?
+export const confirmReservationModel = async (reservation_id, hostID) => {
+  try {
+    const t = await pool.execute(
+      `SELECT guest_id FROM reservations WHERE id = ?`,
+      [reservation_id],
+    );
 
-  // varmista, että hosti omistaa timeslotin
-  const ownedTimeslots = await pool.execute(
-    "SELECT id FROM timeslot WHERE host_id = ?",
-    [hostID],
-  );
-  const IDs = ownedTimeslots.map((timeslot) => timeslot.id);
-  if (IDs.includes(timeslotID)) {
-    const q = `UPDATE reservations SET booking_status = 'confirmed' WHERE timeslot_id = ?`;
-    await pool.execute(q, timeslotID);
-    return;
+    console.log("T:", t);
+
+    if (!t) return null;
+
+    console.log("through");
+
+    return await pool.execute(
+      `UPDATE reservations SET booking_status = 'confirmed' WHERE id = ?`,
+      [reservation_id],
+    );
+  } catch (err) {
+    console.error("ConfirmReservationModel error:", err);
   }
-  throw new Error("Host doesn't own timeslot.");
 };
 
 export const getReservationInformationModel = async (guestID) => {
