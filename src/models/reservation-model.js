@@ -1,6 +1,24 @@
 import pool from "../utils/database.js";
 import { v4 as uuidv4 } from "uuid";
 
+export const getReservationByIdModel = async (reservation_id) => {
+  const q = `SELECT * FROM reservations WHERE id = ?`;
+
+  return await pool.query(q, [reservation_id]);
+};
+
+export const getReservationWithTimeslotByIdModel = async (reservation_id) => {
+  const q = `
+    SELECT r.*, t.start_time, t.end_time
+    FROM reservations r
+    INNER JOIN timeslot t ON r.timeslot_id = t.id
+    WHERE r.id = ?
+  `;
+
+  const rows = await pool.query(q, [reservation_id]);
+  return rows[0] ?? null;
+};
+
 export const reserveTimeslotModel = async (
   timeslotID,
   guestID,

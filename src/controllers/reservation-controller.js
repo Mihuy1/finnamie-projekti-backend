@@ -5,9 +5,11 @@ import {
   reserveTimeslotModel,
   getReservationsForHostModel,
   setPaymentCompleted,
+  getReservationWithTimeslotByIdModel,
 } from "../models/reservation-model.js";
 import {
   getTimeslotBookingCount,
+  getTimeslotByIdWithExperience,
   increaseBookingCount,
   timeslotById,
 } from "../models/timeslot-model.js";
@@ -116,6 +118,24 @@ export const cancelReservation = async (req, res, next) => {
 
     if (!reservation_id || reservation_id === "undefined") {
       return res.status(400).json({ message: "ID is missing" });
+    }
+
+    const reservation =
+      await getReservationWithTimeslotByIdModel(reservation_id);
+
+    console.log("Reservation:", reservation);
+
+    if (!reservation) {
+      return res.status(404).json({ message: "Reservation not found." });
+    }
+
+    if (reservation.start_time) {
+      const start = new Date(reservation.start_time);
+
+      if (start.getTime() < Date.now())
+        return res
+          .status(400)
+          .json({ message: "Experience has already started!" });
     }
 
     await cancelReservationModel(reservation_id, userID);
