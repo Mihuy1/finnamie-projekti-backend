@@ -38,6 +38,9 @@ timeslotRouter
 
 timeslotRouter
   .route("/timeslotWithExperience/:id")
-  .get(allowRoles("host", "admin"), getTimeslotAndExperienceByTimeslotId);
+  .get(
+    allowRoles("guest", "host", "admin"),
+    getTimeslotAndExperienceByTimeslotId,
+  );
 
 export default timeslotRouter;
