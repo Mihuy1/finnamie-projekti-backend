@@ -6,6 +6,8 @@ import {
   getReservationsForHostModel,
   setPaymentCompleted,
   getReservationWithTimeslotByIdModel,
+  getPriceData,
+  setPriceData,
 } from "../models/reservation-model.js";
 import {
   getTimeslotBookingCount,
@@ -220,6 +222,25 @@ export const reservationPaid = async (req, res, next) => {
     const { res_id } = req.body;
     await setPaymentCompleted(res_id);
     res.status(200).json({ message: "Payment completed." });
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const getPrices = async (req, res, next) => {
+  try {
+    const data = await getPriceData();
+    res.status(200).json(data);
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const updatePriceIds = async (req, res, next) => {
+  try {
+    const prices = req.body;
+    await setPriceData(prices);
+    res.status(200).json({ success: true });
   } catch (e) {
     next(e);
   }

@@ -214,3 +214,16 @@ export const setPaymentCompleted = async (res_id) => {
   const rows = await pool.execute(query, res_id);
   console.log(rows);
 };
+
+export const getPriceData = async () => {
+  const query = "SELECT * FROM prices";
+  const rows = await pool.execute(query);
+  return rows;
+};
+
+export const setPriceData = async (prices) => {
+  const query = "UPDATE prices SET price_id = ? WHERE type = ?";
+  await Promise.all(
+    prices.map((price) => pool.execute(query, [price.price_id, price.type])),
+  );
+};
