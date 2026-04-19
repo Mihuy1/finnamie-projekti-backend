@@ -217,16 +217,6 @@ export const updateStatus = async (req, res, next) => {
   }
 };
 
-export const reservationPaid = async (req, res, next) => {
-  try {
-    const { res_id } = req.body;
-    await setPaymentCompleted(res_id);
-    res.status(200).json({ message: "Payment completed." });
-  } catch (e) {
-    next(e);
-  }
-};
-
 export const getPrices = async (req, res, next) => {
   try {
     const data = await getPriceData();
@@ -241,6 +231,14 @@ export const updatePriceIds = async (req, res, next) => {
     const prices = req.body;
     await setPriceData(prices);
     res.status(200).json({ success: true });
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const setReservationPaid = async (resId) => {
+  try {
+    await setPaymentCompleted(resId);
   } catch (e) {
     next(e);
   }

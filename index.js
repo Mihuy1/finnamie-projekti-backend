@@ -5,6 +5,7 @@ import router from "./src/index.js";
 import cookieParser from "cookie-parser";
 import { createServer } from "node:http";
 import { createSocket } from "./socket.js";
+import { webhookRouter } from "./src/routes/webhook-router.js";
 
 const app = express();
 const server = createServer(app);
@@ -16,6 +17,7 @@ app.use(
     credentials: true,
   }),
 );
+app.use("/webhook", webhookRouter); // Tämän pitää olla ennen express.json(), koska Stripe haluaa webhookin req.bodyn Bufferina
 app.use(express.json());
 app.use(cookieParser());
 

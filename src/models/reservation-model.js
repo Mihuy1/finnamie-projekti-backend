@@ -82,6 +82,7 @@ export const getReservationInformationModel = async (guestID) => {
       r.id AS reservation_id, 
       r.booking_status, 
       r.res_date,
+      r.payment_received,
       t.id AS timeslot_id, 
       t.start_time, 
       t.end_time,
@@ -212,7 +213,6 @@ export const getReservationPrice = async (type) => {
 export const setPaymentCompleted = async (res_id) => {
   const query = "UPDATE reservations SET payment_received = TRUE WHERE id = ?";
   const rows = await pool.execute(query, res_id);
-  console.log(rows);
 };
 
 export const getPriceData = async () => {

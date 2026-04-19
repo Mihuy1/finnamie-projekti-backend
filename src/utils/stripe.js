@@ -1,7 +1,7 @@
 import "dotenv/config";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_TEST_SECRET);
+export const stripe = new Stripe(process.env.STRIPE_TEST_SECRET);
 
 const getPriceFromStripeDashboard = async (priceId) => {
   let priceObject;
@@ -17,11 +17,11 @@ const getPriceFromStripeDashboard = async (priceId) => {
   }
 };
 
-export const createCheckoutSession = async (priceId, email) => {
+export const createCheckoutSession = async (priceId, user, resId) => {
   try {
     const priceData = await getPriceFromStripeDashboard(priceId);
     const params = {
-      ...(email && { customer_email: email }),
+      ...(user.email && { customer_email: user.email }),
       line_items: [
         {
           price_data: {
@@ -35,8 +35,18 @@ export const createCheckoutSession = async (priceId, email) => {
           quantity: 1,
         },
       ],
+      // metadata Stripen Transaction dashboardiin
+      payment_intent_data: {
+        metadata: {
+          Name: `${user.first_name} ${user.last_name}`,
+        },
+      },
+      // metadata webhookille
+      metadata: {
+        resId: resId,
+      },
       mode: "payment",
-      success_url: `${process.env.FRONTEND_BASE_URL}success/`,
+      success_url: `${process.env.FRONTEND_BASE_URL}success/${resId}`,
       cancel_url: `${process.env.FRONTEND_BASE_URL}profile/`,
     };
     const session = await stripe.checkout.sessions.create(params);
