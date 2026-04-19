@@ -152,13 +152,6 @@ export const confirmReservation = async (req, res, next) => {
   const { reservation_id } = req.params;
   const userID = req.user.id;
 
-  console.log(
-    "this was called, userID:",
-    userID,
-    "reservation_id:",
-    reservation_id,
-  );
-
   if (!reservation_id || reservation_id === "undefined")
     return res.status(400).status({ message: "reservation_id is missing" });
 

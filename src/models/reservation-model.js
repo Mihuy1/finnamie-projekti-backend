@@ -61,11 +61,7 @@ export const confirmReservationModel = async (reservation_id, hostID) => {
       [reservation_id],
     );
 
-    console.log("T:", t);
-
     if (!t) return null;
-
-    console.log("through");
 
     return await pool.execute(
       `UPDATE reservations SET booking_status = 'confirmed' WHERE id = ?`,
@@ -79,14 +75,15 @@ export const confirmReservationModel = async (reservation_id, hostID) => {
 export const getReservationInformationModel = async (guestID) => {
   const q = `
     SELECT 
-      r.id AS reservation_id, 
-      r.booking_status, 
-      r.res_date,
-      t.id AS timeslot_id, 
-      t.start_time, 
-      t.end_time,
-      e.id AS experience_id,
-      e.host_id,              
+      v.reservation_id, 
+      v.booking_status, 
+      v.current_status,       
+      v.res_date,
+      v.timeslot_id, 
+      v.start_time, 
+      v.end_time,
+      v.experience_id,
+      v.host_id,              
       e.title,
       e.description,         
       e.address,             
@@ -103,22 +100,21 @@ export const getReservationInformationModel = async (guestID) => {
         SELECT cj1.conv_id 
         FROM conversation_join cj1
         JOIN conversation_join cj2 ON cj1.conv_id = cj2.conv_id
-        WHERE cj1.user_id = r.guest_id AND cj2.user_id = e.host_id
+        WHERE cj1.user_id = v.guest_id AND cj2.user_id = v.host_id
         LIMIT 1
       ) AS conv_id          
-    FROM reservations r
-    INNER JOIN timeslot t ON r.timeslot_id = t.id
-    INNER JOIN experiences e ON t.experience_id = e.id
-    INNER JOIN users u ON e.host_id = u.id 
-    LEFT JOIN review rev ON r.id = rev.res_id 
+    FROM v_reservations v
+    INNER JOIN experiences e ON v.experience_id = e.id
+    INNER JOIN users u ON v.host_id = u.id 
+    LEFT JOIN review rev ON v.reservation_id = rev.res_id 
     LEFT JOIN activities a ON e.id = a.id  
     LEFT JOIN (
         SELECT experience_id, MIN(url) as url 
         FROM timeslot_images 
         GROUP BY experience_id
     ) img ON e.id = img.experience_id
-    WHERE r.guest_id = ?
-    ORDER BY r.res_date DESC
+    WHERE v.guest_id = ?
+    ORDER BY v.res_date DESC
   `;
 
   const rows = await pool.execute(q, [guestID]);
@@ -128,15 +124,16 @@ export const getReservationInformationModel = async (guestID) => {
 export const getReservationsForHostModel = async (hostID) => {
   const q = `
     SELECT 
-      r.id AS reservation_id, 
-      r.booking_status, 
-      r.res_date,
-      r.guest_id,
-      t.id AS timeslot_id, 
-      t.start_time, 
-      t.end_time,
-      e.id AS experience_id,
-      e.host_id,              
+      v.reservation_id, 
+      v.booking_status, 
+      v.current_status,      
+      v.res_date,
+      v.guest_id,
+      v.timeslot_id, 
+      v.start_time, 
+      v.end_time,
+      v.experience_id,
+      v.host_id,              
       e.title,
       e.description,         
       e.address,             
@@ -151,16 +148,15 @@ export const getReservationsForHostModel = async (hostID) => {
         SELECT cj1.conv_id 
         FROM conversation_join cj1
         JOIN conversation_join cj2 ON cj1.conv_id = cj2.conv_id
-        WHERE cj1.user_id = r.guest_id AND cj2.user_id = e.host_id
+        WHERE cj1.user_id = v.guest_id AND cj2.user_id = v.host_id
         LIMIT 1
       ) AS conv_id         
-    FROM reservations r
-    INNER JOIN timeslot t ON r.timeslot_id = t.id
-    INNER JOIN experiences e ON t.experience_id = e.id
-    INNER JOIN users guest ON r.guest_id = guest.id
-    LEFT JOIN review rev ON r.id = rev.res_id 
-    WHERE e.host_id = ? 
-    ORDER BY r.res_date DESC
+    FROM v_reservations v
+    INNER JOIN experiences e ON v.experience_id = e.id
+    INNER JOIN users guest ON v.guest_id = guest.id
+    LEFT JOIN review rev ON v.reservation_id = rev.res_id 
+    WHERE v.host_id = ?       -- Filtering directly on the view's host_id
+    ORDER BY v.res_date DESC
   `;
 
   const rows = await pool.execute(q, [hostID]);
