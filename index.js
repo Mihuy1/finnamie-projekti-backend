@@ -5,6 +5,7 @@ import router from "./src/index.js";
 import cookieParser from "cookie-parser";
 import { createServer } from "node:http";
 import { createSocket } from "./socket.js";
+import { webhookRouter } from "./src/routes/webhook-router.js";
 
 const app = express();
 const server = createServer(app);
@@ -12,10 +13,11 @@ createSocket(server);
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "http://localhost:5173", // urli .env:istä?
     credentials: true,
   }),
 );
+app.use("/webhook", webhookRouter); // tämän pitää olla ennen express.json(), koska Stripe haluaa webhookin req.bodyn Bufferina
 app.use(express.json());
 app.use(cookieParser());
 

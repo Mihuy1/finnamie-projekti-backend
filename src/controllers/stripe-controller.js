@@ -3,9 +3,9 @@ import { createCheckoutSession } from "../utils/stripe.js";
 
 export const createSession = async (req, res, next) => {
   try {
-    const { type, email } = req.body;
+    const { type, user, resId } = req.body;
     const { price_id } = await getReservationPrice(type);
-    const sessionUrl = await createCheckoutSession(price_id, email);
+    const sessionUrl = await createCheckoutSession(price_id, user, resId);
     if (sessionUrl) res.status(200).json({ url: sessionUrl });
     else {
       res.status(503).json({

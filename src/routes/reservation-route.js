@@ -4,8 +4,10 @@ import {
   cancelReservation,
   confirmReservation,
   confirmTimeslot,
+  getAllReservations,
   getPrices,
   getReservationInformation,
+  markReservationsAsPaid,
   reserveTimeslot,
   updatePriceIds,
   updateStatus, //
@@ -18,6 +20,11 @@ reservationRouter.use(authorize);
 reservationRouter.patch("/:id/status", updateStatus);
 
 reservationRouter.route("/").get(getReservationInformation);
+reservationRouter
+  .route("/payments")
+  .all(allowRoles("admin"))
+  .get(getAllReservations)
+  .put(markReservationsAsPaid);
 reservationRouter
   .route("/prices")
   .all(allowRoles("admin"))
