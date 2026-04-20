@@ -8,6 +8,8 @@ import {
   getReservationWithTimeslotByIdModel,
   getPriceData,
   setPriceData,
+  getAllReservationsModel,
+  markReservationsPaidModel,
 } from "../models/reservation-model.js";
 import {
   getTimeslotBookingCount,
@@ -239,6 +241,24 @@ export const updatePriceIds = async (req, res, next) => {
 export const setReservationPaid = async (resId) => {
   try {
     await setPaymentCompleted(resId);
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const getAllReservations = async (req, res, next) => {
+  try {
+    const data = await getAllReservationsModel();
+    res.status(200).json(data);
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const markReservationsAsPaid = async (req, res, next) => {
+  try {
+    await markReservationsPaidModel(req.body.reservation_ids);
+    res.status(200).json({ message: "Payment status updated succesfully." });
   } catch (e) {
     next(e);
   }

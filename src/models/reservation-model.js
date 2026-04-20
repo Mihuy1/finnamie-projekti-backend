@@ -227,3 +227,25 @@ export const setPriceData = async (prices) => {
     prices.map((price) => pool.execute(query, [price.price_id, price.type])),
   );
 };
+
+export const getAllReservationsModel = async () => {
+  const query = `SELECT r.id, r.booking_status, r.res_date, r.payment_received, u.first_name, u.last_name FROM reservations r
+  LEFT JOIN users u ON r.guest_id = u.id`;
+  const rows = pool.execute(query);
+  return rows;
+};
+
+export const markReservationsPaidModel = async (reservationIds) => {
+  const query = `
+    UPDATE reservations
+    SET payment_received = 1
+    WHERE id = ?
+      AND payment_received = 0`;
+
+  try {
+    await Promise.all(reservationIds.map((id) => pool.execute(query, [id])));
+  } catch (error) {
+    console.error("Error updating reservations:", error);
+    throw error;
+  }
+};

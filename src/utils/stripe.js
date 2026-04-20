@@ -46,7 +46,7 @@ export const createCheckoutSession = async (priceId, user, resId) => {
         resId: resId,
       },
       mode: "payment",
-      success_url: `${process.env.FRONTEND_BASE_URL}success/${resId}`,
+      success_url: `${process.env.FRONTEND_BASE_URL}success/`,
       cancel_url: `${process.env.FRONTEND_BASE_URL}profile/`,
     };
     const session = await stripe.checkout.sessions.create(params);
