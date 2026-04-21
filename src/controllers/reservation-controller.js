@@ -42,9 +42,6 @@ export const reserveTimeslot = async (req, res, next) => {
     const timeslot = await timeslotById(timeslot_id);
     const host = await getUserByIdModel(timeslot[0].host_id);
 
-    console.log("req.user.email:", req.user.email);
-    console.log("host email:", host.email);
-
     if (!timeslot) {
       await conn.rollback();
       return res.status(404).json({ message: "Timeslot not found." });

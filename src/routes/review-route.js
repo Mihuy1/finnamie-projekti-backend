@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getReviewByExperience,
   getReviewForGuest,
   getReviewForHost,
   getReviews,
@@ -17,5 +18,6 @@ reviewRouter
   .put(authorize, updateReview);
 reviewRouter.route("/host/:hostId").get(getReviewForHost);
 reviewRouter.route("/guest/:guestId").get(getReviewForGuest);
+reviewRouter.route("/experience/:experience_id").get(getReviewByExperience);
 
 export default reviewRouter;

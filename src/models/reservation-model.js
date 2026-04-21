@@ -105,6 +105,7 @@ export const getReservationInformationModel = async (guestID) => {
         LIMIT 1
       ) AS conv_id          
     FROM v_reservations v
+    LEFT JOIN reservations r ON v.reservation_id = r.id
     INNER JOIN experiences e ON v.experience_id = e.id
     INNER JOIN users u ON v.host_id = u.id 
     LEFT JOIN review rev ON v.reservation_id = rev.res_id 

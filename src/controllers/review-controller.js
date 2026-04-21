@@ -1,4 +1,5 @@
 import {
+  findReviewByExperienceId,
   getReviewByGuestId,
   getReviewByHostId,
   listAllReviews,
@@ -34,6 +35,20 @@ const getReviewForGuest = async (req, res, next) => {
   }
 };
 
+const getReviewByExperience = async (req, res, next) => {
+  const { experience_id } = req.params;
+
+  try {
+    const reviews = await findReviewByExperienceId(experience_id);
+
+    res
+      .status(200)
+      .json({ status: "success", results: reviews.length, data: reviews });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const postReview = async (req, res, next) => {
   try {
     await postReviewModel(req.body, req.user.id);
@@ -59,6 +74,7 @@ export {
   getReviews,
   getReviewForHost,
   getReviewForGuest,
+  getReviewByExperience,
   postReview,
   updateReview,
 };
