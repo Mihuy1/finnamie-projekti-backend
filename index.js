@@ -10,10 +10,12 @@ import { webhookRouter } from "./src/routes/webhook-router.js";
 const app = express();
 const server = createServer(app);
 createSocket(server);
+const PORT = process.env.PORT ?? 3000;
+const FRONTEND_URL = process.env.FRONTEND_BASE_URL ?? "http://localhost:5173";
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // urli .env:istä?
+    origin: FRONTEND_URL,
     credentials: true,
   }),
 );
@@ -32,8 +34,6 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: err.message });
 });
-
-const PORT = process.env.PORT ?? 3000;
 
 server.listen(PORT, () => {
   console.log("Server is running on http://localhost:" + PORT);

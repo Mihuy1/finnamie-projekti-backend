@@ -1,7 +1,8 @@
 import "dotenv/config";
 import Stripe from "stripe";
 
-export const stripe = new Stripe(process.env.STRIPE_TEST_SECRET);
+export const stripe = new Stripe(process.env.STRIPE_SECRET);
+const FRONTEND_URL = process.env.FRONTEND_BASE_URL ?? "http://localhost:5173";
 
 const getPriceFromStripeDashboard = async (priceId) => {
   let priceObject;
@@ -46,8 +47,8 @@ export const createCheckoutSession = async (priceId, user, resId) => {
         resId: resId,
       },
       mode: "payment",
-      success_url: `${process.env.FRONTEND_BASE_URL}success/`,
-      cancel_url: `${process.env.FRONTEND_BASE_URL}profile/`,
+      success_url: `${FRONTEND_URL}/success/`,
+      cancel_url: `${FRONTEND_URL}/profile/`,
     };
     const session = await stripe.checkout.sessions.create(params);
     return session.url;
