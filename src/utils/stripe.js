@@ -45,6 +45,7 @@ export const createCheckoutSession = async (priceId, user, resId) => {
       // metadata webhookille
       metadata: {
         resId: resId,
+        email: user.email,
       },
       mode: "payment",
       success_url: `${FRONTEND_URL}/success/`,

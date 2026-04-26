@@ -2,6 +2,7 @@ import express from "express";
 import "dotenv/config";
 import { stripe } from "../utils/stripe.js";
 import { setReservationPaid } from "../controllers/reservation-controller.js";
+import { sendPaymentVerificationEmail } from "../services/brevoService.js";
 
 const endpointSecret = process.env.STRIPE_ENDPOINT_SECRET;
 
@@ -30,8 +31,9 @@ webhookRouter.post(
       switch (event.type) {
         case "checkout.session.completed":
           const data = event.data.object;
-          const { resId } = data.metadata;
+          const { resId, email } = data.metadata;
           setReservationPaid(resId);
+          sendPaymentVerificationEmail(email);
           break;
         default:
           console.log(`Unhandled event type ${event.type}`);
