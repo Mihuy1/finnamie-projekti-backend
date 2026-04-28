@@ -191,26 +191,24 @@ const resendVerificationEmail = async (req, res, next) => {
 const verifyEmail = async (req, res, next) => {
   const { token } = req.query;
 
-  if (!token)
-    return res.status(400).json({ message: "Verification token is missing." });
+  if (!token) {
+    return res.redirect(`http://localhost:5173/verify-error?reason=missing`);
+  }
 
   try {
     const userByToken = await getUserByVerificationToken(token);
 
-    if (!userByToken)
-      return res
-        .status(400)
-        .json({ message: "Invalid or expired verification token." });
+    if (!userByToken) {
+      return res.redirect(`http://localhost:5173/verify-error?reason=invalid`);
+    }
 
     const wasUpdated = await confirmUserEmail(token);
 
     if (wasUpdated === 0) {
-      return res
-        .status(400)
-        .json({ message: "Invalid or expired verification token." });
+      return res.redirect(`http://localhost:5173/verify-error?reason=expired`);
     }
 
-    res.status(200).json({ message: "Email verified successfully!" });
+    res.redirect(`http://localhost:5173/verify-success`);
   } catch (err) {
     next(err);
   }
