@@ -6,6 +6,7 @@ import {
   putExperience,
   removeExperienceById,
   removeExperience,
+  getExperienceById,
 } from "../models/experiences-model.js";
 import {
   getActivitiesByExperienceId,
@@ -50,6 +51,18 @@ const normalizeRuleField = (key, value) => {
 const parseMaybeJson = (value) => {
   if (typeof value === "string") return JSON.parse(value);
   return value;
+};
+
+export const getExperience = async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const experience = await getExperienceById(id);
+    if (!experience || experience.length === 0 || !experience[0])
+      return res.status(404).json({ message: "Experience not found" });
+    res.json(experience[0]);
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const fetchAllExperiences = async (req, res, next) => {

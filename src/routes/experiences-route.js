@@ -4,6 +4,7 @@ import {
   deleteExperienceById,
   fetchAllExperiences,
   fetchAllExperiencesWithHost,
+  getExperience,
   getExperiencesByHost,
   updateExperience,
 } from "../controllers/experiences-controller.js";
@@ -14,6 +15,7 @@ const experiencesRouter = express.Router();
 
 experiencesRouter.route("/").get(fetchAllExperiences);
 experiencesRouter.route("/withHost").get(fetchAllExperiencesWithHost);
+experiencesRouter.route("/byId/:id").get(getExperience);
 
 experiencesRouter.use(authorize);
 

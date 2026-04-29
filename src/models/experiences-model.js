@@ -8,13 +8,16 @@ export const getAllExperiences = async () => {
 };
 
 export const getExperienceById = async (experience_id) => {
-  console.log("Fetching experience with ID:", experience_id);
   const rows = await pool.query("SELECT * FROM experiences WHERE id = ?", [
     experience_id,
   ]);
 
   for (let exp of rows) {
     exp.rule = await getRuleByExperienceId(exp.id);
+  }
+
+  for (let exp of rows) {
+    exp.images = await getExperienceImageURLs(exp.id);
   }
 
   return rows;
